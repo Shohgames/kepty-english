@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="study-tracker.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -123,15 +124,15 @@
                 <div class="flex flex-col items-center">
                     <span class="text-[10px] font-bold opacity-60 uppercase mb-1">今週の目標</span>
                     <div class="flex items-baseline">
-                        <span class="text-2xl font-bold">03</span><span class="text-xs opacity-60 ml-0.5 mr-1.5">時間</span>
-                        <span class="text-2xl font-bold">30</span><span class="text-xs opacity-60 ml-0.5">分</span>
+                        <span id="weekly-target-hours" class="text-2xl font-bold">00</span><span class="text-xs opacity-60 ml-0.5 mr-1.5">時間</span>
+                        <span id="weekly-target-minutes" class="text-2xl font-bold">00</span><span class="text-xs opacity-60 ml-0.5">分</span>
                     </div>
                 </div>
                 <div class="flex flex-col items-center border-l border-white/10 pl-6">
                     <span class="text-[10px] font-bold opacity-60 uppercase mb-1">今週の総学習時間</span>
                     <div class="flex items-baseline text-white">
-                        <span class="text-2xl font-bold">03</span><span class="text-xs opacity-60 ml-0.5 mr-1.5">時間</span>
-                        <span class="text-2xl font-bold">19</span><span class="text-xs opacity-60 ml-0.5">分</span>
+                        <span id="weekly-total-hours" class="text-2xl font-bold">00</span><span class="text-xs opacity-60 ml-0.5 mr-1.5">時間</span>
+                        <span id="weekly-total-minutes" class="text-2xl font-bold">00</span><span class="text-xs opacity-60 ml-0.5">分</span>
                     </div>
                 </div>
             </div>
@@ -152,16 +153,16 @@
                 <div onclick="openHelp('savings')" class="help-btn"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></div>
                 <div class="compare-label-accent">進捗貯金</div>
                 <div class="flex items-center text-sharp">
-                    <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400 mr-2"></i>
-                    <span class="text-2xl font-bold text-white">+15</span><span class="stat-unit">分</span>
+                    <i id="surplus-icon" data-lucide="trending-up" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                    <span id="surplus-value" class="text-2xl font-bold text-white">+0</span><span class="stat-unit">分</span>
                 </div>
             </div>
             <div class="glass-card p-6 flex flex-col items-center justify-center">
                 <div onclick="openHelp('forecast')" class="help-btn"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></div>
                 <div class="compare-label-accent">着地予測</div>
                 <div class="flex items-center text-sharp">
-                    <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400 mr-2"></i>
-                    <span class="text-2xl font-bold text-white">+2</span><span class="stat-unit">時間</span>
+                    <i id="projection-icon" data-lucide="trending-up" class="w-5 h-5 text-emerald-400 mr-2"></i>
+                    <span id="projection-value" class="text-2xl font-bold text-white">+0</span><span class="stat-unit">分</span>
                 </div>
             </div>
         </div>
@@ -175,15 +176,15 @@
         <div class="grid grid-cols-3 gap-2 md:gap-4">
             <div class="glass-card p-3 md:p-6 flex flex-col items-center justify-center overflow-hidden text-center">
                 <div class="flex items-center gap-1.5 mb-4"><i data-lucide="clock" class="w-3 h-3 opacity-70 shrink-0"></i><span class="stat-label">総学習時間</span></div>
-                <div class="flex items-baseline text-sharp"><span class="stat-value">300</span><span class="stat-unit">時間</span></div><div class="h-4"></div>
+                <div class="flex items-baseline text-sharp"><span id="lifetime-total-hours" class="stat-value">0</span><span class="stat-unit">時間</span></div><div class="h-4"></div>
             </div>
             <div class="glass-card p-3 md:p-6 flex flex-col items-center justify-center overflow-hidden text-center">
                 <div class="flex items-center gap-1.5 mb-4"><i data-lucide="calendar-check" class="w-3 h-3 opacity-70 shrink-0"></i><span class="stat-label">総学習日数</span></div>
-                <div class="flex items-baseline text-sharp"><span class="stat-value">6,129</span><span class="stat-unit">日</span></div><div class="h-4"></div>
+                <div class="flex items-baseline text-sharp"><span id="total-study-days" class="stat-value">0</span><span class="stat-unit">日</span></div><div class="h-4"></div>
             </div>
             <div class="glass-card p-3 md:p-6 flex flex-col items-center justify-center overflow-hidden text-center">
                 <div class="flex items-center gap-1.5 mb-4"><i data-lucide="calendar" class="w-3.5 h-3.5 opacity-70 shrink-0"></i><span class="stat-label">連続学習日数</span></div>
-                <div class="flex items-baseline text-sharp"><span class="stat-value">445</span><span class="stat-unit">日</span></div><p class="text-[8px] md:text-[10px] font-bold opacity-40 mt-2 whitespace-nowrap text-sharp">自己ベスト:445日</p>
+                <div class="flex items-baseline text-sharp"><span id="streak-days" class="stat-value">0</span><span class="stat-unit">日</span></div><p id="best-streak-label" class="text-[8px] md:text-[10px] font-bold opacity-40 mt-2 whitespace-nowrap text-sharp">自己ベスト:0日</p>
             </div>
         </div>
     </div>
@@ -211,12 +212,17 @@
 </div>
 
 <script>
-    lucide.createIcons();
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXjpU2jbuvLoLRIW5xqMZJTe728VOylyGBAP192o27Y1CJisC6vb6dOmO94a7lKjvA/exec";
+    const WEEKDAY_LABELS_JA = ['月', '火', '水', '木', '金', '土', '日'];
+    let circleChart = null;
+    let barChart = null;
+    let circleCenterTime = { hours: '00', minutes: '00' };
+
     const helpContent = {
         savings: {
             title: "進捗貯金",
             def: "現時点において、1日あたりの目標ペースに対してどれだけリードしているか、または遅れているかを示します。",
-            formula: "累計時間 - (週目標 × 経過日数 / 7)",
+            formula: "今週総時間 - (週目標 × 経過日数 / 7)",
             interpretation: [
                 { type: "plus", label: "プラスの場合", text: "目標ペースを上回っています。このまま「貯金」を維持しましょう！" },
                 { type: "minus", label: "マイナスの場合", text: "目標に遅れ（借金）が出ています。今日・明日での巻き返しが必要です。" }
@@ -225,13 +231,14 @@
         forecast: {
             title: "着地予測",
             def: "今週の平均ペースを日曜夜まで継続した場合、最終的に目標を何分超過（または不足）して着地するかを予測します。",
-            formula: "(累計時間 / 経過日数 × 7) - 週目標",
+            formula: "(今週総時間 / 経過日数 × 7) - 週目標",
             interpretation: [
                 { type: "plus", label: "プラスの場合", text: "今のトレンドは非常に順調です。目標達成以上の成果が期待できます！" },
                 { type: "minus", label: "マイナスの場合", text: "今のペースだと未達の恐れがあります。今すぐペースアップを検討しましょう。" }
             ]
         }
     };
+
     function openHelp(key) {
         const data = helpContent[key];
         document.getElementById('modal-title').innerText = data.title;
@@ -244,9 +251,147 @@
         document.getElementById('modal-interpretation').innerHTML = interpHtml;
         document.getElementById('help-modal').style.display = 'flex';
     }
-    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
-    const ctxCircle = document.getElementById('circleChart');
-    if (ctxCircle) {
+
+    function closeHelp() {
+        document.getElementById('help-modal').style.display = 'none';
+    }
+
+    function getUrlUserId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+
+    function resolveUserId() {
+        const idFromUrl = (getUrlUserId() || '').trim();
+        if (idFromUrl) {
+            localStorage.setItem('keptyUserId', idFromUrl);
+            return idFromUrl;
+        }
+        return (localStorage.getItem('keptyUserId') || 'tomohiro.19').trim() || 'tomohiro.19';
+    }
+
+    function mondayStart(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function dateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function splitHoursMinutes(totalMinutes) {
+        const safe = Math.max(0, Math.round(totalMinutes));
+        return {
+            hours: String(Math.floor(safe / 60)).padStart(2, '0'),
+            minutes: String(safe % 60).padStart(2, '0')
+        };
+    }
+
+    function signedMinutesText(minutes) {
+        const rounded = Math.round(minutes);
+        const sign = rounded > 0 ? '+' : '';
+        return `${sign}${rounded}`;
+    }
+
+    function getElapsedCompletedDaysSinceMonday(now) {
+        const jsDay = now.getDay();
+        if (jsDay === 0) {
+            return 6;
+        }
+        return jsDay - 1;
+    }
+
+    function getDayActivityMinutesForCurrentWeek(dayActivityMs, now) {
+        const start = mondayStart(now);
+        const values = [0, 0, 0, 0, 0, 0, 0];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            const key = dateKey(d);
+            values[i] = Math.round((dayActivityMs[key] || 0) / 60000);
+        }
+        return values;
+    }
+
+    function computeStreaks(dayActivityMs) {
+        const activeKeys = Object.keys(dayActivityMs).filter(k => dayActivityMs[k] > 0).sort();
+        if (activeKeys.length === 0) {
+            return { currentStreak: 0, bestStreak: 0, totalStudyDays: 0 };
+        }
+
+        const activeSet = new Set(activeKeys);
+        const totalStudyDays = activeKeys.length;
+
+        let bestStreak = 1;
+        let run = 1;
+        for (let i = 1; i < activeKeys.length; i++) {
+            const prev = new Date(activeKeys[i - 1] + 'T00:00:00');
+            const cur = new Date(activeKeys[i] + 'T00:00:00');
+            const delta = Math.round((cur - prev) / 86400000);
+            run = delta === 1 ? run + 1 : 1;
+            if (run > bestStreak) {
+                bestStreak = run;
+            }
+        }
+
+        let currentStreak = 0;
+        const cursor = new Date();
+        cursor.setHours(0, 0, 0, 0);
+        while (activeSet.has(dateKey(cursor))) {
+            currentStreak += 1;
+            cursor.setDate(cursor.getDate() - 1);
+        }
+
+        return { currentStreak, bestStreak, totalStudyDays };
+    }
+
+    async function fetchDashboardTargets(userId) {
+        try {
+            const res = await fetch(`${GAS_WEB_APP_URL}?id=${encodeURIComponent(userId)}`);
+            const data = await res.json();
+            const t = (data && data.dashboardTargets) || {};
+            const daily = Array.isArray(t.dailyTargetMinutes) ? t.dailyTargetMinutes.slice(0, 7) : [];
+            while (daily.length < 7) {
+                daily.push(0);
+            }
+            const weekly = Number.isFinite(Number(t.weeklyTargetMinutes))
+                ? Math.max(0, Math.floor(Number(t.weeklyTargetMinutes)))
+                : daily.reduce((sum, v) => sum + (Number(v) || 0), 0);
+            return { dailyTargetMinutes: daily.map(v => Math.max(0, Math.floor(Number(v) || 0))), weeklyTargetMinutes: weekly };
+        } catch (err) {
+            return { dailyTargetMinutes: [0, 0, 0, 0, 0, 0, 0], weeklyTargetMinutes: 0 };
+        }
+    }
+
+    function setMetricSign(iconId, value) {
+        const icon = document.getElementById(iconId);
+        if (!icon) return;
+        if (value >= 0) {
+            icon.setAttribute('data-lucide', 'trending-up');
+            icon.classList.remove('text-rose-400');
+            icon.classList.add('text-emerald-400');
+        } else {
+            icon.setAttribute('data-lucide', 'trending-down');
+            icon.classList.remove('text-emerald-400');
+            icon.classList.add('text-rose-400');
+        }
+    }
+
+    function renderCircleChart(weeklyTotalMinutes, weeklyTargetMinutes) {
+        const progress = weeklyTargetMinutes > 0 ? Math.min(100, Math.round((weeklyTotalMinutes / weeklyTargetMinutes) * 100)) : 0;
+        const remain = 100 - progress;
+        const parts = splitHoursMinutes(weeklyTotalMinutes);
+        circleCenterTime = parts;
+        const ctxCircle = document.getElementById('circleChart');
+        if (!ctxCircle) return;
+
         const centerTextPlugin = {
             id: 'centerText',
             afterDraw: (chart) => {
@@ -255,12 +400,14 @@
                 const centerX = (chartArea.left + chartArea.right) / 2;
                 const centerY = (chartArea.top + chartArea.bottom) / 2;
                 const isMobile = window.innerWidth < 768;
+
                 ctx.save();
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.font = `700 ${isMobile ? '40px' : '52px'} Inter`;
                 ctx.fillStyle = 'white';
-                ctx.fillText('03', centerX - (isMobile ? 26 : 34), centerY - 5);
-                ctx.fillText('19', centerX + (isMobile ? 28 : 38), centerY - 5);
+                ctx.fillText(circleCenterTime.hours, centerX - (isMobile ? 26 : 34), centerY - 5);
+                ctx.fillText(circleCenterTime.minutes, centerX + (isMobile ? 28 : 38), centerY - 5);
                 ctx.font = `600 ${isMobile ? '12px' : '16px'} Inter`;
                 ctx.fillStyle = 'rgba(255,255,255,0.6)';
                 ctx.fillText('時間', centerX - (isMobile ? 26 : 34), centerY + (isMobile ? 30 : 40));
@@ -268,20 +415,146 @@
                 ctx.restore();
             }
         };
-        new Chart(ctxCircle.getContext('2d'), {
-            type: 'doughnut', data: { datasets: [{ data: [75, 25], backgroundColor: ['white', 'rgba(255,255,255,0.1)'], borderWidth: 0, borderRadius: 20, cutout: '90%' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } },
+
+        if (circleChart) {
+            circleChart.destroy();
+        }
+        circleChart = new Chart(ctxCircle.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [progress, remain],
+                    backgroundColor: ['white', 'rgba(255,255,255,0.1)'],
+                    borderWidth: 0,
+                    borderRadius: 20,
+                    cutout: '90%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            },
             plugins: [centerTextPlugin]
         });
     }
-    const ctxBar = document.getElementById('barChart');
-    if (ctxBar) {
-        new Chart(ctxBar.getContext('2d'), {
-            type: 'bar', data: { labels: ['月', '火', '水', '木', '金', '土', '日'], datasets: [{ data: [40, 30, 60, 55, 45, 20, 10], backgroundColor: 'white', borderRadius: 10, barThickness: window.innerWidth < 768 ? 8 : 12, order: 1 }, { data: [60, 60, 60, 60, 60, 60, 60], backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 10, barThickness: window.innerWidth < 768 ? 8 : 12, order: 2, grouped: false }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false, max: 75 }, x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 12, weight: '600' } }, border: { display: false } } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } },
-            plugins: [{ id: 'barTopLabel', afterDatasetsDraw: (chart) => { const { ctx, chartArea } = chart; if (!chartArea) return; ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = 'bold 11px Inter'; const meta = chart.getDatasetMeta(1); meta.data.forEach((bar) => { ctx.fillText('60', bar.x, bar.y - 12); }); ctx.restore(); } }]
+
+    function renderBarChart(actualMinutes, targetMinutes) {
+        const ctxBar = document.getElementById('barChart');
+        if (!ctxBar) return;
+        const yMax = Math.max(60, ...actualMinutes, ...targetMinutes) + 10;
+
+        if (barChart) {
+            barChart.destroy();
+        }
+        barChart = new Chart(ctxBar.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: WEEKDAY_LABELS_JA,
+                datasets: [
+                    {
+                        data: actualMinutes,
+                        backgroundColor: 'white',
+                        borderRadius: 10,
+                        barThickness: window.innerWidth < 768 ? 8 : 12,
+                        order: 1
+                    },
+                    {
+                        data: targetMinutes,
+                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                        borderRadius: 10,
+                        barThickness: window.innerWidth < 768 ? 8 : 12,
+                        order: 2,
+                        grouped: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { display: false, max: yMax },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 12, weight: '600' } },
+                        border: { display: false }
+                    }
+                },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            },
+            plugins: [{
+                id: 'barTopLabel',
+                afterDatasetsDraw: (chart) => {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.font = 'bold 11px Inter';
+                    const meta = chart.getDatasetMeta(1);
+                    meta.data.forEach((bar, idx) => {
+                        ctx.fillText(String(targetMinutes[idx] || 0), bar.x, bar.y - 12);
+                    });
+                    ctx.restore();
+                }
+            }]
         });
     }
+
+    async function renderDashboard() {
+        if (window.KeptyStudyTracker && typeof window.KeptyStudyTracker.flush === 'function') {
+            window.KeptyStudyTracker.flush();
+        }
+
+        const userId = resolveUserId();
+        const trackerSnapshot = window.KeptyStudyTracker
+            ? window.KeptyStudyTracker.getUserSnapshot(userId)
+            : { totalActiveMs: 0, dayActivityMs: {} };
+        const now = new Date();
+
+        const actualByDayMinutes = getDayActivityMinutesForCurrentWeek(trackerSnapshot.dayActivityMs || {}, now);
+        const weeklyActualMinutes = actualByDayMinutes.reduce((sum, v) => sum + v, 0);
+
+        const targetConfig = await fetchDashboardTargets(userId);
+        const weeklyTargetMinutes = targetConfig.weeklyTargetMinutes;
+        const dailyTargetMinutes = targetConfig.dailyTargetMinutes;
+
+        const elapsedDays = getElapsedCompletedDaysSinceMonday(now);
+        const progressSurplusMinutes = weeklyActualMinutes - (weeklyTargetMinutes * elapsedDays / 7);
+        const projectedResultMinutes = elapsedDays > 0
+            ? ((weeklyActualMinutes / elapsedDays) * 7) - weeklyTargetMinutes
+            : 0;
+
+        const weeklyTarget = splitHoursMinutes(weeklyTargetMinutes);
+        const weeklyActual = splitHoursMinutes(weeklyActualMinutes);
+
+        document.getElementById('weekly-target-hours').innerText = weeklyTarget.hours;
+        document.getElementById('weekly-target-minutes').innerText = weeklyTarget.minutes;
+        document.getElementById('weekly-total-hours').innerText = weeklyActual.hours;
+        document.getElementById('weekly-total-minutes').innerText = weeklyActual.minutes;
+
+        document.getElementById('surplus-value').innerText = signedMinutesText(progressSurplusMinutes);
+        document.getElementById('projection-value').innerText = signedMinutesText(projectedResultMinutes);
+        setMetricSign('surplus-icon', progressSurplusMinutes);
+        setMetricSign('projection-icon', projectedResultMinutes);
+
+        const lifetimeHours = Math.floor((trackerSnapshot.totalActiveMs || 0) / 3600000);
+        document.getElementById('lifetime-total-hours').innerText = lifetimeHours.toLocaleString();
+
+        const streakData = computeStreaks(trackerSnapshot.dayActivityMs || {});
+        document.getElementById('total-study-days').innerText = streakData.totalStudyDays.toLocaleString();
+        document.getElementById('streak-days').innerText = streakData.currentStreak.toLocaleString();
+        document.getElementById('best-streak-label').innerText = `自己ベスト:${streakData.bestStreak}日`;
+
+        renderCircleChart(weeklyActualMinutes, weeklyTargetMinutes);
+        renderBarChart(actualByDayMinutes, dailyTargetMinutes);
+
+        lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        renderDashboard();
+    });
 </script>
 <script>
 function toggleSideMenu(isOpen){var m=document.getElementById('side-menu-content'),o=document.getElementById('side-menu-overlay');if(isOpen){m.classList.add('open');o.classList.remove('hidden');}else{m.classList.remove('open');o.classList.add('hidden');}}

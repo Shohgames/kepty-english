@@ -25,6 +25,106 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function getDashboardTargetConfig(ss, userId) {
+  const candidateSheets = [
+    "dashboard_targets",
+    "DashboardTargets",
+    "Dashboard Target",
+    "Dashboard",
+    "Target"
+  ];
+
+  let targetSheet = null;
+  for (let i = 0; i < candidateSheets.length; i++) {
+    const sh = ss.getSheetByName(candidateSheets[i]);
+    if (sh) {
+      targetSheet = sh;
+      break;
+    }
+  }
+  if (!targetSheet) {
+    return {
+      dailyTargetMinutes: [0, 0, 0, 0, 0, 0, 0],
+      weeklyTargetMinutes: 0,
+      source: "fallback"
+    };
+  }
+
+  const rows = targetSheet.getDataRange().getValues();
+  if (!rows || rows.length < 2) {
+    return {
+      dailyTargetMinutes: [0, 0, 0, 0, 0, 0, 0],
+      weeklyTargetMinutes: 0,
+      source: targetSheet.getName()
+    };
+  }
+
+  const headers = rows[0].map(h => String(h || "").trim().toLowerCase());
+  const headerMap = {};
+  headers.forEach((h, idx) => { headerMap[h] = idx; });
+
+  const userIdIdx = ["userid", "user_id", "id", "user"].reduce((acc, key) => {
+    return acc !== -1 ? acc : (headerMap[key] !== undefined ? headerMap[key] : -1);
+  }, -1);
+
+  let targetRow = null;
+  if (userIdIdx >= 0) {
+    for (let i = 1; i < rows.length; i++) {
+      const rowUserId = String(rows[i][userIdIdx] || "").trim();
+      if (rowUserId === userId) {
+        targetRow = rows[i];
+        break;
+      }
+    }
+  }
+  if (!targetRow) {
+    targetRow = rows[1];
+  }
+
+  const dayAliases = [
+    ["mon", "monday", "月", "月曜", "月曜日"],
+    ["tue", "tuesday", "火", "火曜", "火曜日"],
+    ["wed", "wednesday", "水", "水曜", "水曜日"],
+    ["thu", "thursday", "木", "木曜", "木曜日"],
+    ["fri", "friday", "金", "金曜", "金曜日"],
+    ["sat", "saturday", "土", "土曜", "土曜日"],
+    ["sun", "sunday", "日", "日曜", "日曜日"]
+  ];
+
+  const dailyTargetMinutes = dayAliases.map((aliases, dayIndex) => {
+    let colIdx = -1;
+    for (let i = 0; i < aliases.length; i++) {
+      if (headerMap[aliases[i]] !== undefined) {
+        colIdx = headerMap[aliases[i]];
+        break;
+      }
+    }
+    if (colIdx === -1 && dayIndex + 1 < targetRow.length) {
+      colIdx = dayIndex + 1;
+    }
+    if (colIdx === -1 || colIdx >= targetRow.length) {
+      return 0;
+    }
+    const raw = targetRow[colIdx];
+    const value = Number(raw);
+    return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
+  });
+
+  const weeklyTargetIdx = ["weekly", "weeklytarget", "weekly_target", "week_total", "週目標"].reduce((acc, key) => {
+    return acc !== -1 ? acc : (headerMap[key] !== undefined ? headerMap[key] : -1);
+  }, -1);
+
+  const weeklyTargetMinutes = weeklyTargetIdx >= 0
+    ? Math.max(0, Math.floor(Number(targetRow[weeklyTargetIdx]) || 0))
+    : dailyTargetMinutes.reduce((sum, m) => sum + m, 0);
+
+  return {
+    dailyTargetMinutes: dailyTargetMinutes,
+    weeklyTargetMinutes: weeklyTargetMinutes,
+    source: targetSheet.getName()
+  };
+}
+
 // 既存のデータ取得ロジック（最新の状態を維持）
 function getPortalData(userId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -43,24 +143,29 @@ function getPortalData(userId) {
 
   // 2. Grammar
   const grammarSs = SpreadsheetApp.openById("1LEw95D2dEKOAwU2Rb516vq7uHSC97z6-DA3BH_3tDVs");
-  const grammarSheet = grammarSs.getSheetByName("梶山") || grammarSs.getSheets()[0];
+  const grammarExamSheet = grammarSs.getSheetByName("exam") || grammarSs.getSheets()[0];
+  const grammarExplainSheet = grammarSs.getSheetByName("explain") || grammarSs.getSheetByName("explain");
   let grammarData = [];
-  if (grammarSheet) {
-    const gRows = grammarSheet.getDataRange().getValues().slice(1);
+  if (grammarExamSheet) {
+    const gRows = grammarExamSheet.getDataRange().getValues().slice(1);
     grammarData = gRows.map(row => ({
       category: String(row[0] || ""), question: String(row[1] || ""), answer: String(row[2] || ""),
       option2: String(row[3] || ""), option3: String(row[4] || ""), option4: String(row[5] || ""), explanation: String(row[6] || "")
     })).filter(item => item.question !== "");
   }
   const manualDataMap = {};
-  const gManualSheet = grammarSs.getSheetByName("マニュアル");
-  if (gManualSheet) {
-    gManualSheet.getDataRange().getValues().forEach(r => manualDataMap[String(r[0]).trim()] = String(r[1] || ""));
+  if (grammarExplainSheet) {
+    grammarExplainSheet.getDataRange().getValues().forEach(r => {
+      const k = String(r[0] || "").trim();
+      if (k) {
+        manualDataMap[k] = String(r[1] || "");
+      }
+    });
   }
 
   // 3. Reading
   const readingSs = SpreadsheetApp.openById("1z-2SiGESlHhAX35o1YgGwpbkgd6u3qNWvgbv3PsAo3M");
-  const readingSheet = readingSs.getSheetByName("梶山") || readingSs.getSheets()[0];
+  const readingSheet = readingSs.getSheetByName("exam") || readingSs.getSheets()[0];
   let readingData = [];
   if (readingSheet) {
     const rRows = readingSheet.getDataRange().getValues().slice(1);
@@ -70,7 +175,15 @@ function getPortalData(userId) {
         let sIdx = 2 + (i * 6);
         if (row[sIdx]) keywords.push({ word: String(row[sIdx]), meaning: String(row[sIdx+1]), phonetic: String(row[sIdx+2]), pos: String(row[sIdx+3]), example: String(row[sIdx+4]), example_ja: String(row[sIdx+5]) });
       }
-      return { category: String(row[0]), theme: String(row[1]), keywords: keywords, article: String(row[38]), training_topic: String(row[39]) };
+      return {
+        category: String(row[0]),
+        theme: String(row[1]),
+        keywords: keywords,
+        article: String(row[38] || ""),      // AM: Reading
+        slashArticle: String(row[39] || ""), // AN: Slash Reading
+        training_topic: String(row[40] || ""),
+        japaneseArticle: String(row[42] || "") // AQ: Japanese
+      };
     }).filter(item => item.theme && item.theme !== "");
   }
 
@@ -89,7 +202,14 @@ function getPortalData(userId) {
       if (!grouped[key]) {
         const audioId = String(row[7]);
         const audioUrl = audioId ? `https://docs.google.com/uc?export=download&id=${audioId}` : "";
-        grouped[key] = { lesson: mat, theme: no, audioUrl: audioUrl, text: String(row[8]), highlights: [] };
+        grouped[key] = {
+          lesson: mat,
+          theme: no,
+          audioUrl: audioUrl,
+          text: String(row[8] || ""),
+          japanese: String(row[9] || ""),
+          highlights: []
+        };
       }
       if (row[2] && row[3]) grouped[key].highlights.push({ type: String(row[2]), target: String(row[3]), symbol: String(row[4]), katakana: String(row[5]), explanation: String(row[6]) });
     });
@@ -104,7 +224,17 @@ function getPortalData(userId) {
     const pRows = phSheet.getDataRange().getValues().slice(1);
     pronunciationData = pRows.map(row => {
       const videos = [row[6], row[7], row[8], row[9], row[10], row[11]].map(v => String(v||"").trim()).filter(v => v.includes('<iframe'));
-      return { category: String(row[0]||""), point: String(row[1]||""), word: String(row[2]||""), symbol: String(row[3]||""), katakana: String(row[4]||""), translation: String(row[5]||""), videos: videos };
+      return {
+        category: String(row[0]||""),
+        subcategory: String(row[1]||""),    // B
+        point: String(row[1]||""),
+        word: String(row[3]||""),           // D
+        symbol: String(row[4]||""),         // E
+        katakana: String(row[5]||""),       // F
+        translation: String(row[5]||""),
+        explain: String(row[13]||""),       // N
+        videos: videos
+      };
     }).filter(i => i.word.trim() !== "");
   }
   let phManuals = {};
@@ -153,12 +283,15 @@ function getPortalData(userId) {
     })).filter(item => item.theme !== "" && item.theme !== "undefined");
   }
 
+  const dashboardTargets = getDashboardTargetConfig(ss, userId);
+
   return { 
     chunk: chunkData, grammar: grammarData, grammarManual: manualDataMap, 
     reading: readingData, shadowing: shadowingData, 
     pronunciation: pronunciationData, pronunciationManual: phManuals,
     speaking: speakingData, vocabulary: vocabularyData, 
     topicTalk: topicTalkData,
+    dashboardTargets: dashboardTargets,
     welcomeMessage: personalMsg,
     success: true 
   };

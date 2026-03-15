@@ -7,6 +7,7 @@
 <!-- External Libraries -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="study-tracker.js" defer></script>
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 <!-- Application Styles -->
@@ -25,6 +26,8 @@
     .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#64748b; }
     .side-menu-icon-box.active-bg { background:#CE4A22;color:white; }
     #side-menu-content.open { right:0; }
+    #main-content-area iframe { width: 100% !important; max-width: 100% !important; }
+    #main-content-area .video-wrapper iframe { aspect-ratio: 16/9; }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 pb-24 text-center">
@@ -33,7 +36,16 @@
 <nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-[#CE4A22] pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span><span class="text-[9px] text-slate-400 font-bold uppercase">App Main</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dashboard / Logs</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span><span class="text-[9px] text-slate-400 font-bold uppercase">Strategy</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dressing Room</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Audio Admin</span></div></a></div></nav>
 <div id="welcome-overlay"><div id="welcome-message">Kepty English</div></div>
 <div class="p-4 max-w-5xl mx-auto">
-    <header class="flex items-center justify-between py-6 px-2"><h1 id="app-title" class="text-3xl font-[900] text-slate-900 tracking-tighter">Vocabulary</h1></header>
+    <header class="py-6 px-2">
+        <div class="flex items-start justify-between gap-4">
+            <h1 id="app-title" class="text-3xl font-[900] text-slate-900 tracking-tighter">Vocabulary</h1>
+            <div id="training-skill-indicator" class="hidden items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+                <i id="skill-icon" data-lucide="sparkles" class="w-4 h-4 text-slate-500"></i>
+                <span id="skill-text" class="text-[10px] font-black text-slate-500 uppercase tracking-widest"></span>
+            </div>
+        </div>
+        <p id="app-description" class="text-left text-[12px] md:text-[13px] text-slate-500 leading-relaxed mt-3 min-h-[3.6em]"></p>
+    </header>
     <div class="mode-switch-wrapper" id="mode-wrapper"><div class="mode-switch-container" id="mode-switch-container"><div class="mode-slider" id="mode-slider"></div><div id="mode-buttons-area" class="flex w-full h-full"></div></div></div>
     <div id="category-container" class="flex overflow-x-auto gap-1 mb-1 no-scrollbar px-1"></div>
     <div id="theme-menu-container" class="mb-6 hidden"><div id="theme-scroll-list" class="theme-scroll-container"></div></div>
@@ -58,21 +70,54 @@ window.onerror = function(msg, url, line, col, err) { console.error('[GLOBAL ERR
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXjpU2jbuvLoLRIW5xqMZJTe728VOylyGBAP192o27Y1CJisC6vb6dOmO94a7lKjvA/exec";
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('id') || "tomohiro.19";
+localStorage.setItem('keptyUserId', userId);
 
 const initialFetch = fetch(`${GAS_WEB_APP_URL}?id=${userId}`).then(res => res.json());
 
-let portalData = null; let currentApp = 'vocabulary'; let currentModeIdx = 0; let currentSubKey = ""; let currentTheme = ""; let examIdx = 0; let currentExamNum = 1; let examResults = []; let shadowingMode = 'front'; let currentAudioUrl = ""; let phCompletedIds = new Set();
+let portalData = null; let currentApp = 'vocabulary'; let currentModeIdx = 0; let currentSubKey = ""; let currentTheme = ""; let examIdx = 0; let currentExamNum = 1; let examResults = []; let shadowingMode = 'script'; let readingViewMode = 'reading'; let currentAudioUrl = ""; let phCompletedIds = new Set();
 let mediaRecorder; let audioChunks = [];
 const HL_TYPES = ['Linking', 'Reduction', 'Flap T', 'Special Sound Changes'];
-const HL_COLORS = { 'Linking': 'var(--hl-blue)', 'Reduction': 'var(--hl-pink)', 'Flap T': 'var(--hl-green-soft)', 'Special Sound Changes': 'var(--hl-yellow)' };
-const BOLD_COLORS = { 'Linking': '#2563eb', 'Reduction': '#db2777', 'Flap T': '#059669', 'Special Sound Changes': '#db2777' };
+const HL_COLORS = { 'Linking': 'var(--hl-blue)', 'Reduction': 'var(--hl-pink)', 'Flap T': 'var(--hl-green-soft)', 'Special Sound Changes': 'var(--hl-yellow)', 'Special': 'var(--hl-yellow)' };
+const BOLD_COLORS = { 'Linking': '#2563eb', 'Reduction': '#db2777', 'Flap T': '#059669', 'Special Sound Changes': '#a16207', 'Special': '#a16207' };
+
+function getTrainingMeta(appName) {
+    const meta = {
+        vocabulary: { skillIcon: 'languages', skillText: 'Expressive Range', description: 'Expands expressive range and enables precise verbalization of ideas. Instead of memorizing isolated words, it is best to learn them together with example sentences that demonstrate real usage context.' },
+        pronunciation: { skillIcon: 'audio-lines', skillText: 'Phonetic Accuracy', description: 'Reduces stress caused by not understanding others or being asked to repeat yourself. Improvement comes from objectively correcting subtle differences between your voice and native pronunciation.' },
+        grammar: { skillIcon: 'book-open-check', skillText: 'Structural Clarity', description: 'Understanding the rules that connect words enables clear and accurate communication. Rather than memorizing patterns alone, it is essential to understand why they exist and practice building sentences.' },
+        shadowing: { skillIcon: 'headphones', skillText: 'Listening Fluency', description: 'Develops rhythm, stress, and sound changes unique to English, improving listening ability and fluency. Practicing while imagining sentence meaning strengthens neural processing.' },
+        reading: { skillIcon: 'book-marked', skillText: 'Logical Reading', description: 'Builds the ability to understand English quickly and logically while observing vocabulary and grammar in context. Focus on grasping overall imagery and author intent.' },
+        topicTalk: { skillIcon: 'message-circle', skillText: 'Opinion Delivery', description: 'Develops the ability to logically express opinions and sustain conversations on specific themes. Preparing keywords in advance and paraphrasing when stuck are key techniques.' },
+        speaking: { skillIcon: 'message-square', skillText: 'Speaking Framework', description: 'Helps acquire expression patterns that make communication clearer and more persuasive. Understanding the difference between Japanese and English expression styles reduces Japanese-style phrasing.' },
+        chunk: { skillIcon: 'layers', skillText: 'Response Speed', description: 'Trains the ability to instantly convert fragmented thoughts into full sentences, improving conversational response speed. Starting simple and expanding with conjunctions is highly effective.' }
+    };
+    return meta[appName] || { skillIcon: 'sparkles', skillText: 'Training', description: '' };
+}
 
 function switchApp(appName) {
-    currentApp = appName; currentModeIdx = 0; examIdx = 0; currentTheme = ""; currentSubKey = ""; examResults = []; shadowingMode = 'front';
+    currentApp = appName; currentModeIdx = 0; examIdx = 0; currentTheme = ""; currentSubKey = ""; examResults = []; shadowingMode = 'script'; readingViewMode = 'reading';
     document.querySelectorAll('.footer-item').forEach(el => el.classList.remove('active'));
     const navEl = document.getElementById(`nav-${appName}`); if(navEl) navEl.classList.add('active');
     const titles = { chunk:'Sentence Building', topicTalk:'Topic Talk', shadowing:'Shadowing', reading:'Reading', pronunciation:'Pronunciation', speaking:'Speaking Form', vocabulary:'Vocabulary', grammar:'Grammar' };
     document.getElementById('app-title').innerText = titles[appName];
+    const meta = getTrainingMeta(appName);
+    const indicator = document.getElementById('training-skill-indicator');
+    if (indicator) {
+        indicator.classList.remove('hidden');
+        indicator.classList.add('flex');
+    }
+    const icon = document.getElementById('skill-icon');
+    if (icon) {
+        icon.setAttribute('data-lucide', meta.skillIcon);
+    }
+    const skillText = document.getElementById('skill-text');
+    if (skillText) {
+        skillText.innerText = meta.skillText;
+    }
+    const desc = document.getElementById('app-description');
+    if (desc) {
+        desc.innerText = meta.description;
+    }
     const modeArea = document.getElementById('mode-buttons-area'), slider = document.getElementById('mode-slider');
     let modes = ['Training', 'Exam'];
     if (appName === 'shadowing') modes = ['Practice']; else if (appName === 'reading' || appName === 'topicTalk') modes = ['Topic']; else if (appName === 'pronunciation') modes = ['Explain', 'Video', 'Exam']; else if (appName === 'grammar' || appName === 'speaking') modes = ['Explain', 'Exam']; else if (appName === 'vocabulary') modes = ['List', 'Exam'];
@@ -91,19 +136,24 @@ function switchApp(appName) {
     
     switchMode(0); renderCategories();
 }
-function switchMode(idx) { currentModeIdx = idx; document.getElementById('mode-slider').style.transform = `translateX(${idx * 100}%)`; document.querySelectorAll('.mode-switch-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx)); document.getElementById('ph-progress-area').classList.toggle('hidden', !(currentApp === 'pronunciation' && currentModeIdx === 2)); renderThemes(); }
+function switchMode(idx) { currentModeIdx = idx; document.getElementById('mode-slider').style.transform = `translateX(${idx * 100}%)`; document.querySelectorAll('.mode-switch-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx)); document.getElementById('ph-progress-area').classList.add('hidden'); renderThemes(); }
 function renderCategories() {
     const container = document.getElementById('category-container'), data = portalData[currentApp]; if(!data) return;
     const key = (currentApp === 'chunk' || currentApp === 'shadowing' || currentApp === 'topicTalk') ? 'lesson' : (portalData[currentApp][0].category ? 'category' : 'lesson');
     const uniqueKeys = [...new Set(data.map(item => item.lesson || item.category))].filter(Boolean);
     if (!currentSubKey || !uniqueKeys.includes(currentSubKey)) currentSubKey = uniqueKeys[0];
-    container.innerHTML = uniqueKeys.map(k => `<button onclick="selectSubKey('${k}')" class="category-tab ${currentSubKey === k ? 'active' : ''}">${k.charAt(0).toUpperCase() + k.slice(1).toLowerCase()}</button>`).join('');
+    container.innerHTML = uniqueKeys.map(k => {
+        const safe = String(k).replace(/'/g, "\\'");
+        const label = currentApp === 'pronunciation' ? String(k).toLowerCase() : String(k);
+        return `<button onclick="selectSubKey('${safe}')" class="category-tab ${currentSubKey === k ? 'active' : ''}">${label}</button>`;
+    }).join('');
     renderThemes();
 }
 function renderThemes() {
     const themeMenu = document.getElementById('theme-menu-container'), themeList = document.getElementById('theme-scroll-list');
     const isEx = (currentApp === 'pronunciation' ? currentModeIdx === 2 : (currentApp === 'chunk' || currentApp === 'vocabulary' || currentApp === 'grammar' || currentApp === 'speaking' ? currentModeIdx === 1 : false));
-    if (isEx || currentApp === 'vocabulary') { themeMenu.classList.add('hidden'); renderContent(); return; }
+    const pronunciationExamWithSubcategories = currentApp === 'pronunciation' && currentModeIdx === 2;
+    if ((isEx && !pronunciationExamWithSubcategories) || currentApp === 'vocabulary') { themeMenu.classList.add('hidden'); renderContent(); return; }
     const data = portalData[currentApp], key = (currentApp === 'chunk' || currentApp === 'shadowing' || currentApp === 'topicTalk') ? 'lesson' : (portalData[currentApp][0].category ? 'category' : 'lesson');
     const filteredBySub = data.filter(d => (d.lesson || d.category) === currentSubKey);
     const themes = [...new Set(filteredBySub.map(d => d.theme || d.point))].filter(Boolean);
@@ -112,12 +162,12 @@ function renderThemes() {
     themeMenu.classList.remove('hidden'); themeList.innerHTML = themes.map(t => `<div onclick="selectTheme('${t}')" class="theme-item ${currentTheme === t ? 'active' : ''}">${currentApp==='shadowing'?'#'+t:t}</div>`).join('');
     renderContent();
 }
-function selectSubKey(key) { currentSubKey = key; currentTheme = ""; examIdx = 0; examResults = []; shadowingMode = 'front'; stopAudio(); renderCategories(); }
-function selectTheme(themeName) { currentTheme = themeName; shadowingMode = 'front'; stopAudio(); renderThemes(); }
+function selectSubKey(key) { currentSubKey = key; currentTheme = ""; examIdx = 0; examResults = []; shadowingMode = 'script'; readingViewMode = 'reading'; stopAudio(); renderCategories(); }
+function selectTheme(themeName) { currentTheme = themeName; shadowingMode = 'script'; readingViewMode = 'reading'; stopAudio(); renderThemes(); }
 function stopAudio() { const p = document.getElementById('global-player'); p.pause(); p.currentTime = 0; currentAudioIdx = null; currentAudioTime = 0; }
-function generateProgressDotsHtml(total, current) {
-    let rows = Math.ceil(total / 10), html = `<div class="flex flex-col items-center gap-1.5 mb-6">`;
-    for(let r=0; r<rows; r++) { html += `<div class="flex gap-1.5">`; for(let i=0; i<10; i++) { let idx = r * 10 + i; if(idx < total) html += `<div class="progress-dot ${idx < current ? 'filled' : ''}"></div>`; } html += `</div>`; }
+function generateProgressDotsHtml(total, current, columns = 10) {
+    let rows = Math.ceil(total / columns), html = `<div class="flex flex-col items-center gap-1.5 mb-6">`;
+    for(let r=0; r<rows; r++) { html += `<div class="flex gap-1.5">`; for(let i=0; i<columns; i++) { let idx = r * columns + i; if(idx < total) html += `<div class="progress-dot ${idx < current ? 'filled' : ''}"></div>`; } html += `</div>`; }
     return html + `</div>`;
 }
 
@@ -126,16 +176,29 @@ function renderContent() {
     if (!portalData) return;
     const data = portalData[currentApp]; if(!data) return;
     const isEx = (currentApp === 'pronunciation' ? currentModeIdx === 2 : currentModeIdx === 1);
-    const filtered = data.filter(d => (d.lesson || d.category) === currentSubKey && (isEx || (!currentTheme || d.theme === currentTheme || d.point === currentTheme || currentApp === 'vocabulary')));
+    const shouldFilterTheme = (!isEx) || (currentApp === 'pronunciation' && currentModeIdx === 2 && currentTheme);
+    const filtered = data.filter(d => {
+        if ((d.lesson || d.category) !== currentSubKey) return false;
+        if (!shouldFilterTheme) return true;
+        return (!currentTheme || d.theme === currentTheme || d.point === currentTheme || currentApp === 'vocabulary');
+    });
     
     if (currentApp === 'pronunciation') {
-        if (currentModeIdx === 0) { area.innerHTML = `<div class="word-card p-8 text-slate-700 text-left leading-normal">${portalData.pronunciationManual[currentSubKey.toLowerCase().trim()] || "Coming soon!"}</div>`; }
-        else if (currentModeIdx === 1) { const vids = []; data.filter(i => i.category === currentSubKey).forEach(item => { if (item.videos) item.videos.forEach(v => { if (!vids.includes(v)) vids.push(v); }); }); area.innerHTML = vids.length > 0 ? `<div class="flex flex-col">${vids.map(v => `<div class="video-wrapper">${v}</div>`).join('')}</div>` : `<p class="py-10 font-bold">No videos available.</p>`; }
+        if (currentModeIdx === 0) {
+            const expFromData = filtered[0]?.explain || data.find(i => i.category === currentSubKey && i.explain)?.explain || "";
+            const expFallback = portalData.pronunciationManual[currentSubKey.toLowerCase().trim()] || "Coming soon!";
+            area.innerHTML = `<div class="word-card p-8 text-slate-700 text-left leading-normal whitespace-pre-line">${expFromData || expFallback}</div>`;
+        }
+        else if (currentModeIdx === 1) {
+            const vids = [];
+            data.filter(i => i.category === currentSubKey).forEach(item => { if (item.videos) item.videos.forEach(v => { if (!vids.includes(v)) vids.push(v); }); });
+            area.innerHTML = vids.length > 0
+                ? `<div class="flex flex-col gap-4">${vids.map(v => `<div class="bg-white border border-slate-100 rounded-2xl p-3 overflow-hidden shadow-sm"><div class="w-full overflow-hidden">${v}</div></div>`).join('')}</div>`
+                : `<p class="py-10 font-bold">No videos available.</p>`;
+        }
         else { 
-            updatePhProgress(currentSubKey); 
             area.innerHTML = `<div class="space-y-4">` + filtered.map((item, idx) => { 
-                const id = `${currentSubKey}-${idx}`; const isDone = phCompletedIds.has(id); 
-                return `<div id="phcard-${id}" class="word-card p-5 flex items-center justify-between shadow-sm ${isDone ? 'success-mode' : ''}"><div class="good-label" id="phlabel-${id}">Good!</div><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${item.word}')">${item.word}</div><div class="flex items-center gap-2 text-slate-400 text-sm font-bold mb-2"><span>${item.symbol}</span><span>${item.katakana}</span><span>|</span><span>${item.translation}</span></div><div class="text-[10px] font-black text-kepty-orange uppercase text-left">${item.point}</div></div><div class="flex flex-col items-center gap-4"><button onclick="playTTS('${item.word}')" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><button id="phbtn-${id}" onclick="toggleRecord('${id}')" class="record-btn shrink-0 ${isDone ? 'bg-kepty-light-orange' : ''}"><i data-lucide="mic" class="w-6 h-6"></i></button></div></div>`; 
+                return `<div class="word-card p-5 flex items-center justify-between shadow-sm"><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${item.word}')">${item.word}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed mb-1">${item.symbol || ''}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed">${item.katakana || ''}</div><div class="text-[10px] font-black text-kepty-orange uppercase text-left mt-2">${item.subcategory || item.point || ''}</div></div><div class="flex flex-col items-center gap-4"><button onclick="playTTS('${item.word}')" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button></div></div>`; 
             }).join('') + `</div>`; 
         }
     } else if (currentModeIdx === 0) {
@@ -145,23 +208,26 @@ function renderContent() {
         }
         else if (currentApp === 'shadowing') { 
             const item = filtered[0]; if (!item) return; 
-            area.innerHTML = `<div class="shadowing-content-card bg-white rounded-[24px] border border-f1f5f9 overflow-hidden"><div class="flex items-center justify-between p-6 border-b border-f1f5f9"><div class="mode-switch-container w-[230px]"><div class="mode-slider w-[calc(50%-2px)] ${shadowingMode==='back'?'translate-x-full':''}"></div><div onclick="shadowingMode='front'; renderContent();" class="mode-switch-btn ${shadowingMode==='front'?'active':''}">Script</div><div onclick="shadowingMode='back'; renderContent();" class="mode-switch-btn ${shadowingMode==='back'?'active':''}">Sound Changes</div></div><button id="sh-play-btn" onclick="playAudio('${item.lesson}_${item.theme}', this)" class="w-11 h-11 rounded-full bg-slate-50 text-kepty-orange flex items-center justify-center shadow-sm active:scale-90 transition-all"><i data-lucide="volume-2"></i></button></div><div class="p-6 text-left"><p class="card-inner-title" style="color:var(--kepty-orange);">${shadowingMode==='front'?'Script':'Sound Changes'}</p>${shadowingMode==='back' ? `<div class="flex flex-wrap gap-2 mb-6 text-left">${HL_TYPES.map(t => `<div class="flex items-center gap-1 text-[9px] font-bold text-slate-400"><div class="w-2.5 h-2.5 rounded-[3px]" style="background:${HL_COLORS[t]}"></div> ${t.split(' ')[0]}</div>`).join('')}</div>` : ''}<div class="text-slate-700 text-lg leading-[1.8] font-medium whitespace-pre-wrap text-left">${shadowingMode==='front' ? item.text : generateHighlightedHtml(item.text, item.highlights)}</div></div></div>`; 
+            const modeIdx = shadowingMode === 'script' ? 0 : (shadowingMode === 'sound' ? 1 : 2);
+            const bodyText = shadowingMode === 'script' ? item.text : (shadowingMode === 'sound' ? generateHighlightedHtml(item.text, item.highlights) : (item.japanese || 'No Japanese text available.'));
+            area.innerHTML = `<div class="shadowing-content-card bg-white rounded-[24px] border border-f1f5f9 overflow-hidden"><div class="flex items-center justify-between p-6 border-b border-f1f5f9"><div class="mode-switch-container w-[330px]"><div class="mode-slider" style="width:calc(100%/3 - 2px); transform:translateX(${modeIdx * 100}%);"></div><div onclick="shadowingMode='script'; renderContent();" class="mode-switch-btn ${shadowingMode==='script'?'active':''}">Script</div><div onclick="shadowingMode='sound'; renderContent();" class="mode-switch-btn ${shadowingMode==='sound'?'active':''}">Sound Changes</div><div onclick="shadowingMode='japanese'; renderContent();" class="mode-switch-btn ${shadowingMode==='japanese'?'active':''}">Japanese</div></div><button id="sh-play-btn" onclick="playAudio('${item.lesson}_${item.theme}', this)" class="w-11 h-11 rounded-full bg-slate-50 text-kepty-orange flex items-center justify-center shadow-sm active:scale-90 transition-all"><i data-lucide="volume-2"></i></button></div><div class="p-6 text-left"><p class="card-inner-title" style="color:var(--kepty-orange);">${shadowingMode==='script'?'Script':(shadowingMode==='sound'?'Sound Changes':'Japanese')}</p>${shadowingMode==='sound' ? `<div class="flex flex-wrap gap-2 mb-6 text-left">${HL_TYPES.map(t => `<div class="flex items-center gap-1 text-[9px] font-bold text-slate-400"><div class="w-2.5 h-2.5 rounded-[3px]" style="background:${HL_COLORS[t]}"></div> ${t.split(' ')[0]}</div>`).join('')}</div>` : ''}<div class="text-slate-700 text-lg leading-[1.8] font-medium whitespace-pre-wrap text-left">${bodyText}</div></div></div>`; 
         }
         else if (currentApp === 'topicTalk') { 
             if (examIdx >= filtered.length) { area.innerHTML = `<div class="kepty-card flex items-center justify-center"><p class="text-4xl font-black text-kepty-orange tracking-tight mb-8">Complete!</p><div class="mt-4"><span onclick="examIdx=0; renderContent();" class="restart-link">Restart</span></div></div>`; lucide.createIcons(); return; }
             const item = filtered[examIdx]; if(!item) return; 
-            area.innerHTML = generateProgressDotsHtml(filtered.length, examIdx) + `<div class="kepty-card flex-1 flex flex-col justify-between"><div class="mb-2"><span class="text-[10px] font-black text-kepty-orange uppercase bg-kepty-light-orange px-2 py-0.5 rounded-md">${item.theme}</span></div><p class="text-xl font-bold text-slate-800 mb-8 whitespace-pre-wrap text-center">${item.training_topic}</p><div class="flex flex-col items-center gap-6 mt-6"><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 w-full px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="topicTalkNext(${filtered.length})" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg"><i data-lucide="chevron-right"></i></button></div></div></div>`; 
+            area.innerHTML = generateProgressDotsHtml(filtered.length, examIdx) + `<div class="kepty-card flex-1 flex flex-col justify-between"><div class="mb-2"><span class="text-[10px] font-black text-kepty-orange uppercase bg-kepty-light-orange px-2 py-0.5 rounded-md">${item.theme}</span></div><p class="text-base md:text-lg font-semibold text-slate-800 mb-8 whitespace-pre-wrap text-center">${item.training_topic}</p><div class="flex flex-col items-center gap-6 mt-6"><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 w-full px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="topicTalkNext(${filtered.length})" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div></div></div>`; 
         }
         else if (currentApp === 'reading') { 
             const item = filtered[0]; if (!item) return; 
+            const articleText = readingViewMode === 'reading' ? (item.article || '') : (readingViewMode === 'slash' ? (item.slashArticle || '') : (item.japaneseArticle || ''));
             area.innerHTML = `<section class="space-y-4 text-left mb-10"><div class="flex items-center gap-2 mb-4"><div class="w-1 h-6 bg-kepty-orange rounded-full"></div><h2 class="text-lg font-black text-slate-900 tracking-tight">Words and Phrases</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">` + 
-            item.keywords.map(k => `<div class="word-card p-4 shadow-sm border border-slate-100 flex flex-col"><div class="flex justify-between items-start mb-1"><h4 class="text-xl font-black text-slate-900">${k.word}</h4><div class="flex flex-col items-end gap-1"><span class="text-[9px] font-black text-kepty-orange uppercase bg-kepty-light-orange px-1.5 py-0.5 rounded">${k.pos}</span><button onclick="playTTS('${k.word.replace(/'/g, "\\'")}')" class="p-1 text-slate-400"><i data-lucide="volume-2" class="w-4 h-4"></i></button></div></div><p class="text-[10px] text-slate-400 font-mono mb-2">${k.phonetic}</p><p class="font-bold text-sm text-slate-700">${k.meaning}</p></div>`).join('') + `</div></section><section class="text-left"><div class="flex items-center gap-2 mb-4"><div class="w-1 h-6 bg-kepty-orange rounded-full"></div><h2 class="text-lg font-black text-slate-900 tracking-tight">Reading Article</h2></div><div class="word-card p-6 md:p-10 shadow-sm border border-slate-100 leading-[1.8] text-slate-700 font-medium whitespace-pre-wrap text-lg">${item.article}</div></section>`; 
+            item.keywords.map(k => `<div class="word-card p-4 shadow-sm border border-slate-100 flex flex-col"><div class="flex justify-between items-start mb-1"><h4 class="text-xl font-black text-slate-900">${k.word}</h4><div class="flex flex-col items-end gap-1"><span class="text-[9px] font-black text-kepty-orange uppercase bg-kepty-light-orange px-1.5 py-0.5 rounded">${k.pos}</span><button onclick="playTTS('${k.word.replace(/'/g, "\\'")}')" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button></div></div><p class="text-[10px] text-slate-400 font-mono mb-2">${k.phonetic}</p><p class="font-bold text-sm text-slate-600">${k.meaning}</p></div>`).join('') + `</div></section><section class="text-left"><div class="flex items-center justify-between mb-4"><div class="flex items-center gap-2"><div class="w-1 h-6 bg-kepty-orange rounded-full"></div><h2 class="text-lg font-black text-slate-900 tracking-tight">Reading Article</h2></div><div class="mode-switch-container w-[280px]"><div class="mode-slider" style="width:calc(100%/3 - 2px); transform:translateX(${readingViewMode==='reading'?0:(readingViewMode==='slash'?100:200)}%);"></div><div onclick="readingViewMode='reading'; renderContent();" class="mode-switch-btn ${readingViewMode==='reading'?'active':''}">Reading</div><div onclick="readingViewMode='slash'; renderContent();" class="mode-switch-btn ${readingViewMode==='slash'?'active':''}">Slash Reading</div><div onclick="readingViewMode='japanese'; renderContent();" class="mode-switch-btn ${readingViewMode==='japanese'?'active':''}">Japanese</div></div></div><div class="word-card p-6 md:p-10 shadow-sm border border-slate-100 leading-[1.8] text-slate-700 font-medium whitespace-pre-wrap text-lg">${articleText}</div></section>`; 
         }
         else if (currentApp === 'speaking') { 
             const item = filtered[0]; if (!item) return; 
             area.innerHTML = `<div class="word-card p-5 shadow-sm text-left border border-slate-100 flex flex-col gap-4">
-                    <h4 class="text-xl font-black text-slate-900 mb-0 tracking-tight">${item.point}</h4>
-                    <section class="bg-slate-100 px-4 py-3 rounded-[24px] border border-slate-200 text-sm font-medium text-slate-700 leading-normal text-left">
+                    <h4 class="text-lg font-bold text-slate-800 mb-0 tracking-tight">${item.point}</h4>
+                    <section class="bg-slate-100 px-4 py-3 rounded-[24px] border border-slate-200 text-sm font-medium text-slate-700 leading-normal text-left whitespace-pre-line">
                         <div class="flex items-center gap-2 mb-2">
                             <span class="text-[10px] font-black bg-slate-700 text-white px-2 py-0.5 rounded tracking-widest uppercase">Point</span>
                         </div>
@@ -174,7 +240,7 @@ function renderContent() {
                 </div>`; 
         }
         else if (currentApp === 'vocabulary') { 
-            area.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + filtered.map(w => `<div class="flip-card-voc" onclick="this.classList.toggle('flipped')" ontouchstart=""><div class="flip-card-inner"><div class="flip-card-front" style="justify-content: flex-start; padding-top: 24px;"><div class="flex justify-between items-start mb-0.5"><span class="text-[9px] font-black text-kepty-orange uppercase tracking-wider">${w.pos}</span><button onclick="event.stopPropagation(); playTTS('${w.word.replace(/'/g, "\\'")}')" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center -mt-2"><i data-lucide="volume-2" class="w-5 h-5"></i></button></div><h3 class="text-2xl font-black text-slate-900 mb-0.5 tracking-tight">${w.word}</h3><p class="text-slate-400 font-mono text-xs">${w.pronunciation}</p><div class="absolute bottom-2 right-2 text-slate-400 opacity-40"><i data-lucide="hand" class="w-4 h-4"></i></div></div><div class="flip-card-back"><h3 class="text-lg font-bold mb-2 text-slate-800">${w.meaning}</h3><div class="bg-black/5 p-3 rounded-xl text-[11px] italic text-slate-600 leading-relaxed overflow-y-auto max-h-[80px]">${w.example.replace(new RegExp(`(${w.word})`, 'gi'), '<strong>$1</strong>')}</div><div class="absolute bottom-2 right-2 text-slate-400 opacity-40"><i data-lucide="hand" class="w-4 h-4"></i></div></div></div></div>`).join('') + `</div>`; 
+            area.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + filtered.map((w, i) => `<div class="flip-card-voc" onclick="this.classList.toggle('flipped')" ontouchstart=""><div class="flip-card-inner"><div class="flip-card-front" style="justify-content:flex-start; padding-top:20px;"><span class="absolute top-2 left-3 text-[10px] font-black text-kepty-orange opacity-70 font-mono">#${i+1}</span><button onclick="event.stopPropagation(); playTTS('${w.word.replace(/'/g, "\\'")}')" class="absolute top-2 right-3 w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><h3 class="text-2xl font-black text-slate-900 mb-0.5 tracking-tight">${w.word}</h3><div class="flex items-center gap-2 text-slate-400 font-mono text-xs"><span>${w.pronunciation}</span><span class="opacity-30">|</span><span class="font-semibold">${w.pos}</span></div><div class="absolute bottom-2 right-2 text-slate-400 opacity-40"><i data-lucide="hand" class="w-4 h-4"></i></div></div><div class="flip-card-back"><h3 class="text-sm font-bold mb-2 text-slate-800">${w.meaning}</h3><div class="bg-black/5 p-3 rounded-xl text-[11px] italic text-slate-600 leading-relaxed overflow-y-auto max-h-[80px]">${w.example.replace(new RegExp(`(${w.word})`, 'gi'), '<strong>$1</strong>')}</div><div class="absolute bottom-2 right-2 text-slate-400 opacity-40"><i data-lucide="hand" class="w-4 h-4"></i></div></div></div></div>`).join('') + `</div>`; 
         }
         else area.innerHTML = `<div class="word-card p-8 text-slate-700 text-left leading-snug">${portalData.grammarManual[currentSubKey] || "No Explanation Prepared."}</div>`;
     } else renderExamStep(filtered);
@@ -193,13 +259,19 @@ function renderExamStep(pool) {
     if (currentApp === 'vocabulary' || currentApp === 'grammar') {
         const it = pool[examIdx]; let ops = [], qTitle = (currentApp === 'vocabulary') ? it.word : it.question;
         if (currentApp === 'vocabulary') { let distractors = portalData.vocabulary.filter(w => w.meaning !== it.meaning).map(w => w.meaning); distractors.sort(() => Math.random() - 0.5); ops = [it.meaning, ...distractors.slice(0, 3)].sort(() => Math.random() - 0.5); } else { ops = [it.answer, it.option2, it.option3, it.option4].filter(Boolean).sort(() => Math.random() - 0.5); }
-        area.innerHTML = generateProgressDotsHtml(pool.length, examIdx) + `<div class="mb-4 text-left ${examIdx===0?'invisible':''}"><button onclick="examIdx--; renderContent();" class="flex items-center gap-1 text-slate-400 font-bold text-xs"><i data-lucide="arrow-left" class="w-3 h-3"></i> Back</button></div><div class="text-center mb-8 px-2"><h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-snug">${qTitle}</h2></div><div id="quiz-options-grid" class="grid grid-cols-1 gap-3 max-w-xl mx-auto">${ops.map(o => `<button onclick="handleExamAnswer('${qTitle.replace(/'/g, "\\'")}', '${o.replace(/'/g, "\\'")}', '${(currentApp==='vocabulary'?it.meaning:it.answer).replace(/'/g, "\\'")}', this)" class="quiz-option-btn text-left"><div class="quiz-badge"></div>${o}</button>`).join('')}</div>`;
+        area.innerHTML = generateProgressDotsHtml(pool.length, examIdx, currentApp === 'vocabulary' ? 20 : 10) + `<div class="mb-4 text-left ${examIdx===0?'invisible':''}"><button onclick="examIdx--; renderContent();" class="flex items-center gap-1 text-slate-400 font-bold text-xs"><i data-lucide="arrow-left" class="w-3 h-3"></i> Back</button></div><div class="text-center mb-8 px-2"><h2 class="text-base md:text-lg font-semibold text-slate-900 tracking-tight leading-snug">${qTitle}</h2></div><div id="quiz-options-grid" class="grid grid-cols-1 gap-3 max-w-xl mx-auto">${ops.map(o => `<button onclick="handleExamAnswer('${qTitle.replace(/'/g, "\\'")}', '${o.replace(/'/g, "\\'")}', '${(currentApp==='vocabulary'?it.meaning:it.answer).replace(/'/g, "\\'")}', this)" class="quiz-option-btn text-left"><div class="quiz-badge"></div>${o}</button>`).join('')}</div>`;
     } else if (currentApp === 'chunk') { 
         const ex = pool[0][`exam_${currentExamNum}`];
-        area.innerHTML = generateProgressDotsHtml(30, examIdx) + `<p class="text-sm font-bold text-slate-700 mb-4 px-1 text-center">以下の日本語を英語に訳してください。</p><div class="kepty-card flex-1 flex flex-col justify-between"><div class="mt-1 mb-4 px-2 text-center flex-1 flex justify-center items-center"><p class="text-lg md:text-xl font-bold text-slate-800 leading-relaxed">${ex[examIdx] || "No Data"}</p></div><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div></div>`; 
+        area.innerHTML = generateProgressDotsHtml(30, examIdx) + `<p class="text-sm font-bold text-slate-700 mb-4 px-1 text-center">以下の日本語を英語に訳してください。</p><div class="kepty-card flex-1 flex flex-col justify-between"><div class="mt-1 mb-4 px-2 text-center flex-1 flex justify-center items-center"><p class="text-base md:text-lg font-semibold text-slate-800 leading-relaxed">${ex[examIdx] || "No Data"}</p></div><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div></div>`; 
     }
     else if (currentApp === 'speaking' || currentApp === 'pronunciation') { 
-        const it = pool[examIdx]; area.innerHTML = generateProgressDotsHtml(pool.length, examIdx) + `<div class="kepty-card flex-1 flex flex-col justify-between">${currentApp==='speaking'?`<div class="sp-rule-box"><span class="sp-rule-badge">RULE</span><p class="sp-rule-text whitespace-pre-line leading-relaxed text-sm">${it.rules}</p></div>`:''}<div class="px-2 text-center mb-6 flex-1 flex justify-center items-center"><p class="text-lg md:text-xl font-bold text-slate-900 leading-relaxed tracking-tight text-left">${it.assignment || it.word}</p></div><div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div></div>`; 
+        const it = pool[examIdx];
+        const speakingRuleHtml = currentApp==='speaking' ? `<section class="bg-slate-100 px-4 py-3 rounded-[24px] border border-slate-200 text-sm font-medium text-slate-700 leading-normal text-left whitespace-pre-line"><div class="flex items-center gap-2 mb-2"><span class="text-[10px] font-black bg-slate-700 text-white px-2 py-0.5 rounded tracking-widest uppercase">Rule</span></div>${it.rules || ''}</section>` : '';
+        const mainText = it.assignment || it.word;
+        const controls = currentApp === 'pronunciation'
+            ? `<div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div>`
+            : `<div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div>`;
+        area.innerHTML = generateProgressDotsHtml(pool.length, examIdx) + `<div class="kepty-card flex-1 flex flex-col justify-between">${speakingRuleHtml}<div class="px-2 text-center mb-6 flex-1 flex justify-center items-center"><p class="text-base md:text-lg font-semibold text-slate-900 leading-relaxed tracking-tight text-center whitespace-pre-line">${mainText}</p></div>${controls}</div>`; 
     }
     lucide.createIcons();
 }
@@ -326,37 +398,79 @@ function playAudio(audioId, btn) {
 }
 
 function playTTS(text) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.9; window.speechSynthesis.speak(u); }
-function generateHighlightedHtml(text, hls) { if (!hls || hls.length === 0) return text; let html = text; hls.forEach((hl, idx) => { const regex = new RegExp(`(${hl.target})`, 'g'); html = html.replace(regex, `<span class="hl-overlay" onclick="openShadowModal(${idx})" style="text-decoration: underline; text-decoration-color: ${HL_COLORS[hl.type]}; text-underline-offset: 4px; cursor: pointer;">$1</span>`); }); return html; }
+function normalizeHighlightType(type) {
+    const t = String(type || '').trim().toLowerCase();
+    if (t === 'special' || t === 'special sound changes') return 'Special Sound Changes';
+    if (t === 'linking') return 'Linking';
+    if (t === 'reduction') return 'Reduction';
+    if (t === 'flap t') return 'Flap T';
+    return type;
+}
+function generateHighlightedHtml(text, hls) {
+    if (!hls || hls.length === 0) return text;
+    let html = text;
+    hls.forEach((hl, idx) => {
+        const normalizedType = normalizeHighlightType(hl.type);
+        const color = HL_COLORS[normalizedType] || 'var(--hl-yellow)';
+        const regex = new RegExp(`(${hl.target})`, 'g');
+        html = html.replace(regex, `<span class="hl-overlay" onclick="openShadowModal(${idx})" style="text-decoration: underline; text-decoration-color: ${color}; text-underline-offset: 4px; cursor: pointer;">$1</span>`);
+    });
+    return html;
+}
 function openShadowModal(idx) {
     const item = portalData.shadowing.find(d => d.theme === currentTheme && d.lesson === currentSubKey);
     if (!item || !item.highlights[idx]) return;
-    const hl = item.highlights[idx], color = BOLD_COLORS[hl.type] || 'var(--kepty-orange)';
+    const hl = item.highlights[idx];
+    const normalizedType = normalizeHighlightType(hl.type);
+    const color = BOLD_COLORS[normalizedType] || 'var(--kepty-orange)';
     document.getElementById('modal-bar').style.background = color;
-    const titleEl = document.getElementById('modal-title-text'); titleEl.style.color = color; titleEl.innerText = hl.type;
+    const titleEl = document.getElementById('modal-title-text'); titleEl.style.color = color; titleEl.innerText = normalizedType;
     document.getElementById('modal-target').innerText = hl.target; document.getElementById('modal-desc').innerText = hl.explanation;
     document.getElementById('detail-modal').style.display = 'flex';
 }
 
 function runWelcomeOverlay() {
     const overlay = document.getElementById('welcome-overlay'), msgEl = document.getElementById('welcome-message');
+    const hasSeenWelcome = sessionStorage.getItem('keptyWelcomeSeen') === '1';
+    if (hasSeenWelcome) {
+        overlay.style.display = 'none';
+        initialFetch.then(data => { portalData = data; switchApp('vocabulary'); lucide.createIcons(); });
+        return;
+    }
     setTimeout(() => { msgEl.style.opacity = '1'; }, 500); 
     
-    // Use the initial fetch that was already started at page load
-    const minDisplayTime = new Promise(resolve => setTimeout(resolve, 3000));
+    // Show for 2 seconds after text appears (text starts at 500ms)
+    const minDisplayTime = new Promise(resolve => setTimeout(resolve, 2500));
     
     Promise.all([initialFetch, minDisplayTime]).then(([data]) => {
         portalData = data;
         overlay.style.opacity = '0'; 
         setTimeout(() => { 
-            overlay.style.display = 'none'; 
-            switchApp('vocabulary'); 
-            lucide.createIcons();
+            sessionStorage.setItem('keptyWelcomeSeen', '1');
+            window.location.href = `dashboard.html?id=${encodeURIComponent(userId)}`;
         }, 600);
     });
 }
 
+let wakeLockSentinel = null;
+async function requestWakeLock() {
+    try {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+            wakeLockSentinel = null;
+        });
+    } catch (err) {
+        console.warn('[WakeLock] unavailable:', err.message);
+    }
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+});
+
 window.onload = () => { 
     runWelcomeOverlay(); 
+    requestWakeLock();
     lucide.createIcons();
     const f = document.getElementById('main-footer'); 
     f.addEventListener('scroll', () => { document.getElementById('footer-arrow').style.display = (f.scrollLeft + f.clientWidth >= f.scrollWidth - 10) ? 'none' : 'flex'; });
