@@ -212,7 +212,7 @@
 </div>
 
 <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXjpU2jbuvLoLRIW5xqMZJTe728VOylyGBAP192o27Y1CJisC6vb6dOmO94a7lKjvA/exec";
+    const DASHBOARD_DATA_DIR = 'dashboard_data';
     const WEEKDAY_LABELS_JA = ['月', '火', '水', '木', '金', '土', '日'];
     let circleChart = null;
     let barChart = null;
@@ -352,22 +352,81 @@
         return { currentStreak, bestStreak, totalStudyDays };
     }
 
-    async function fetchDashboardTargets(userId) {
+    async function fetchJsonWithFallback(url, fallbackValue) {
         try {
-            const res = await fetch(`${GAS_WEB_APP_URL}?id=${encodeURIComponent(userId)}`);
-            const data = await res.json();
-            const t = (data && data.dashboardTargets) || {};
-            const daily = Array.isArray(t.dailyTargetMinutes) ? t.dailyTargetMinutes.slice(0, 7) : [];
-            while (daily.length < 7) {
-                daily.push(0);
+            const res = await fetch(`${url}?v=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) {
+                return fallbackValue;
             }
-            const weekly = Number.isFinite(Number(t.weeklyTargetMinutes))
-                ? Math.max(0, Math.floor(Number(t.weeklyTargetMinutes)))
-                : daily.reduce((sum, v) => sum + (Number(v) || 0), 0);
-            return { dailyTargetMinutes: daily.map(v => Math.max(0, Math.floor(Number(v) || 0))), weeklyTargetMinutes: weekly };
+            return await res.json();
         } catch (err) {
-            return { dailyTargetMinutes: [0, 0, 0, 0, 0, 0, 0], weeklyTargetMinutes: 0 };
+            return fallbackValue;
         }
+    }
+
+    function normalizeDailyTargetMinutes(raw) {
+        const list = Array.isArray(raw) ? raw.slice(0, 7) : [];
+        while (list.length < 7) {
+            list.push(0);
+        }
+        return list.map(v => Math.max(0, Math.floor(Number(v) || 0)));
+    }
+
+    function normalizeWeeklyTargetMinutes(rawWeekly, dailyTargetMinutes) {
+        if (Number.isFinite(Number(rawWeekly))) {
+            return Math.max(0, Math.floor(Number(rawWeekly)));
+        }
+        return dailyTargetMinutes.reduce((sum, v) => sum + v, 0);
+    }
+
+    function normalizeDayActivityMs(dayActivityMsRaw) {
+        const normalized = {};
+        if (!dayActivityMsRaw || typeof dayActivityMsRaw !== 'object') {
+            return normalized;
+        }
+        Object.keys(dayActivityMsRaw).forEach(key => {
+            const value = Number(dayActivityMsRaw[key]);
+            if (Number.isFinite(value) && value > 0) {
+                normalized[key] = Math.floor(value);
+            }
+        });
+        return normalized;
+    }
+
+    function mergeDayActivityMs(baseDayActivityMs, extraDayActivityMs) {
+        const merged = { ...normalizeDayActivityMs(baseDayActivityMs) };
+        const extra = normalizeDayActivityMs(extraDayActivityMs);
+        Object.keys(extra).forEach(key => {
+            merged[key] = (merged[key] || 0) + extra[key];
+        });
+        return merged;
+    }
+
+    function sumDayActivityMs(dayActivityMs) {
+        return Object.values(dayActivityMs || {}).reduce((sum, v) => sum + (Number(v) || 0), 0);
+    }
+
+    async function loadDashboardUserData(userId) {
+        const index = await fetchJsonWithFallback(`${DASHBOARD_DATA_DIR}/users.json`, {
+            defaultUserId: 'tomohiro.19',
+            users: {
+                'tomohiro.19': { configFile: 'tomohiro.19.json' }
+            }
+        });
+
+        const users = (index && typeof index.users === 'object' && index.users) ? index.users : {};
+        const defaultUserId = (index && typeof index.defaultUserId === 'string' && index.defaultUserId.trim())
+            ? index.defaultUserId.trim()
+            : 'tomohiro.19';
+
+        const selectedUser = users[userId] ? userId : defaultUserId;
+        const selectedEntry = users[selectedUser] || {};
+        const configFile = typeof selectedEntry === 'string'
+            ? selectedEntry
+            : (selectedEntry.configFile || `${selectedUser}.json`);
+
+        const userData = await fetchJsonWithFallback(`${DASHBOARD_DATA_DIR}/${configFile}`, {});
+        return { userData };
     }
 
     function setMetricSign(iconId, value) {
@@ -507,17 +566,27 @@
         }
 
         const userId = resolveUserId();
+        const { userData } = await loadDashboardUserData(userId);
+
         const trackerSnapshot = window.KeptyStudyTracker
             ? window.KeptyStudyTracker.getUserSnapshot(userId)
             : { totalActiveMs: 0, dayActivityMs: {} };
         const now = new Date();
 
-        const actualByDayMinutes = getDayActivityMinutesForCurrentWeek(trackerSnapshot.dayActivityMs || {}, now);
-        const weeklyActualMinutes = actualByDayMinutes.reduce((sum, v) => sum + v, 0);
+        const planned = (userData && typeof userData.planned === 'object') ? userData.planned : {};
+        const dailyTargetMinutes = normalizeDailyTargetMinutes(planned.dailyTargetMinutes);
+        const weeklyTargetMinutes = normalizeWeeklyTargetMinutes(planned.weeklyTargetMinutes, dailyTargetMinutes);
 
-        const targetConfig = await fetchDashboardTargets(userId);
-        const weeklyTargetMinutes = targetConfig.weeklyTargetMinutes;
-        const dailyTargetMinutes = targetConfig.dailyTargetMinutes;
+        const historyDayActivityMs = normalizeDayActivityMs(userData && userData.historyDayActivityMs);
+        const useLocalTracker = !(userData && userData.storageMode === 'json-only');
+        const mergedDayActivityMs = useLocalTracker
+            ? mergeDayActivityMs(historyDayActivityMs, trackerSnapshot.dayActivityMs || {})
+            : historyDayActivityMs;
+
+        const mergedTotalActiveMs = sumDayActivityMs(mergedDayActivityMs);
+
+        const actualByDayMinutes = getDayActivityMinutesForCurrentWeek(mergedDayActivityMs, now);
+        const weeklyActualMinutes = actualByDayMinutes.reduce((sum, v) => sum + v, 0);
 
         const elapsedDays = getElapsedCompletedDaysSinceMonday(now);
         const progressSurplusMinutes = weeklyActualMinutes - (weeklyTargetMinutes * elapsedDays / 7);
@@ -538,10 +607,10 @@
         setMetricSign('surplus-icon', progressSurplusMinutes);
         setMetricSign('projection-icon', projectedResultMinutes);
 
-        const lifetimeHours = Math.floor((trackerSnapshot.totalActiveMs || 0) / 3600000);
+        const lifetimeHours = Math.floor(mergedTotalActiveMs / 3600000);
         document.getElementById('lifetime-total-hours').innerText = lifetimeHours.toLocaleString();
 
-        const streakData = computeStreaks(trackerSnapshot.dayActivityMs || {});
+        const streakData = computeStreaks(mergedDayActivityMs);
         document.getElementById('total-study-days').innerText = streakData.totalStudyDays.toLocaleString();
         document.getElementById('streak-days').innerText = streakData.currentStreak.toLocaleString();
         document.getElementById('best-streak-label').innerText = `自己ベスト:${streakData.bestStreak}日`;

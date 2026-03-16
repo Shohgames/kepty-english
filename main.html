@@ -82,14 +82,14 @@ const BOLD_COLORS = { 'Linking': '#2563eb', 'Reduction': '#db2777', 'Flap T': '#
 
 function getTrainingMeta(appName) {
     const meta = {
-        vocabulary: { skillIcon: 'languages', skillText: 'Expressive Range', description: 'Expands expressive range and enables precise verbalization of ideas. Instead of memorizing isolated words, it is best to learn them together with example sentences that demonstrate real usage context.' },
-        pronunciation: { skillIcon: 'audio-lines', skillText: 'Phonetic Accuracy', description: 'Reduces stress caused by not understanding others or being asked to repeat yourself. Improvement comes from objectively correcting subtle differences between your voice and native pronunciation.' },
-        grammar: { skillIcon: 'book-open-check', skillText: 'Structural Clarity', description: 'Understanding the rules that connect words enables clear and accurate communication. Rather than memorizing patterns alone, it is essential to understand why they exist and practice building sentences.' },
-        shadowing: { skillIcon: 'headphones', skillText: 'Listening Fluency', description: 'Develops rhythm, stress, and sound changes unique to English, improving listening ability and fluency. Practicing while imagining sentence meaning strengthens neural processing.' },
-        reading: { skillIcon: 'book-marked', skillText: 'Logical Reading', description: 'Builds the ability to understand English quickly and logically while observing vocabulary and grammar in context. Focus on grasping overall imagery and author intent.' },
-        topicTalk: { skillIcon: 'message-circle', skillText: 'Opinion Delivery', description: 'Develops the ability to logically express opinions and sustain conversations on specific themes. Preparing keywords in advance and paraphrasing when stuck are key techniques.' },
-        speaking: { skillIcon: 'message-square', skillText: 'Speaking Framework', description: 'Helps acquire expression patterns that make communication clearer and more persuasive. Understanding the difference between Japanese and English expression styles reduces Japanese-style phrasing.' },
-        chunk: { skillIcon: 'layers', skillText: 'Response Speed', description: 'Trains the ability to instantly convert fragmented thoughts into full sentences, improving conversational response speed. Starting simple and expanding with conjunctions is highly effective.' }
+        vocabulary: { skillIcon: 'languages', skillText: 'Expressive Range', description: '表現の幅が広がり、伝えたいことを正確に言語化できるようになります。単語単体ではなく、例文とともに「どう使うか」の文脈をセットで覚えると最善です。' },
+        pronunciation: { skillIcon: 'audio-lines', skillText: 'Phonetic Accuracy', description: '会話の内容が聞き取れない、相手に聞き返される、そのようなストレスをなくせるようになります。自分の声とネイティブの音との「わずかな差」を客観的に修正し続けることが上達の近道です。' },
+        grammar: { skillIcon: 'book-open-check', skillText: 'Structural Clarity', description: '言葉を正しくつなぐルールを理解することで、誤解のない正確な意思疎通が可能になります。形を暗記するだけでなく「なぜその形になるのか」という概念を理解し、実際に文を作る練習が不可欠です。' },
+        shadowing: { skillIcon: 'headphones', skillText: 'Listening Fluency', description: '英語特有のリズムや強弱、音の変化が身につき、リスニング力と流暢さが飛躍的に向上します。ただ音を追うだけでなく、常に文章の意味を頭に浮かべながら行うことで「脳の回路」が強化されます。' },
+        reading: { skillIcon: 'book-marked', skillText: 'Logical Reading', description: '文脈の中での語彙・文法の使われ方を学び、素早く・論理的に英語を理解する力が養われます。一言一句を訳そうとせず、文章全体の情景や筆者の意図をイメージで捉える意識が大切です。' },
+        topicTalk: { skillIcon: 'message-circle', skillText: 'Opinion Delivery', description: '特定のテーマについて自分の意見を論理的に展開し、会話を継続させる力がつきます。事前にキーワードを準備した上で、詰まっても別の表現で言い換える（パラフレーズ）粘り強さが鍵となります。' },
+        speaking: { skillIcon: 'message-square', skillText: 'Speaking Framework', description: 'スピーキング時の適切な表現方法・型を習得し、より相手に納得感を与える話し方ができるようになります。日本語と英語の表現方法の違いを理解することで、日本語的な話し方から脱却します。' },
+        chunk: { skillIcon: 'layers', skillText: 'Response Speed', description: '頭の中にある断片的な情報を瞬時に文章化し、会話のレスポンス速度を高めます。簡単な文から始め、接続詞などを使って徐々に情報を肉付けしていくステップアップが非常に有効です。' }
     };
     return meta[appName] || { skillIcon: 'sparkles', skillText: 'Training', description: '' };
 }
@@ -267,11 +267,14 @@ function renderExamStep(pool) {
     else if (currentApp === 'speaking' || currentApp === 'pronunciation') { 
         const it = pool[examIdx];
         const speakingRuleHtml = currentApp==='speaking' ? `<section class="bg-slate-100 px-4 py-3 rounded-[24px] border border-slate-200 text-sm font-medium text-slate-700 leading-normal text-left whitespace-pre-line"><div class="flex items-center gap-2 mb-2"><span class="text-[10px] font-black bg-slate-700 text-white px-2 py-0.5 rounded tracking-widest uppercase">Rule</span></div>${it.rules || ''}</section>` : '';
-        const mainText = it.assignment || it.word;
+        const mainText = currentApp === 'speaking'
+            ? (it.assignment || it.example || it.point || '')
+            : (it.word || '');
         const controls = currentApp === 'pronunciation'
             ? `<div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div>`
             : `<div class="voice-wave"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div><div class="flex items-center justify-center gap-6 mt-6 px-10"><button onclick="examIdx = Math.max(0, examIdx-1); renderContent();" class="nav-icon-btn p-4 bg-white/50 text-slate-400 rounded-full shadow-sm ${examIdx===0?'invisible':''} active:scale-95"><i data-lucide="chevron-left"></i></button><div class="exam-mic-btn" onclick="toggleGenericRecord()"><i data-lucide="mic"></i></div><button onclick="examIdx++; renderContent();" class="nav-icon-btn p-4 next-btn-orange rounded-full shadow-lg active:scale-95"><i data-lucide="chevron-right"></i></button></div>`;
-        area.innerHTML = generateProgressDotsHtml(pool.length, examIdx) + `<div class="kepty-card flex-1 flex flex-col justify-between">${speakingRuleHtml}<div class="px-2 text-center mb-6 flex-1 flex justify-center items-center"><p class="text-base md:text-lg font-semibold text-slate-900 leading-relaxed tracking-tight text-center whitespace-pre-line">${mainText}</p></div>${controls}</div>`; 
+        const progressHtml = currentApp === 'pronunciation' ? '' : generateProgressDotsHtml(pool.length, examIdx);
+        area.innerHTML = progressHtml + `<div class="kepty-card flex-1 flex flex-col justify-between">${speakingRuleHtml}<div class="px-2 text-center mb-6 flex-1 flex justify-center items-center"><p class="text-base md:text-lg font-semibold text-slate-900 leading-relaxed tracking-tight text-center whitespace-pre-line">${mainText}</p></div>${controls}</div>`; 
     }
     lucide.createIcons();
 }
@@ -397,6 +400,8 @@ function playAudio(audioId, btn) {
     lucide.createIcons();
 }
 
+
+
 function playTTS(text) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.9; window.speechSynthesis.speak(u); }
 function normalizeHighlightType(type) {
     const t = String(type || '').trim().toLowerCase();
@@ -432,15 +437,18 @@ function openShadowModal(idx) {
 function runWelcomeOverlay() {
     const overlay = document.getElementById('welcome-overlay'), msgEl = document.getElementById('welcome-message');
     const hasSeenWelcome = sessionStorage.getItem('keptyWelcomeSeen') === '1';
+    const welcomeTotalMs = 0;
+    const fadeDurationMs = 0;
+    const textRevealDelayMs = 0;
     if (hasSeenWelcome) {
         overlay.style.display = 'none';
         initialFetch.then(data => { portalData = data; switchApp('vocabulary'); lucide.createIcons(); });
         return;
     }
-    setTimeout(() => { msgEl.style.opacity = '1'; }, 500); 
-    
-    // Show for 2 seconds after text appears (text starts at 500ms)
-    const minDisplayTime = new Promise(resolve => setTimeout(resolve, 2500));
+    setTimeout(() => { msgEl.style.opacity = '1'; }, textRevealDelayMs);
+
+    // Keep total intro duration at 2 seconds including fade-out animation.
+    const minDisplayTime = new Promise(resolve => setTimeout(resolve, Math.max(0, welcomeTotalMs - fadeDurationMs)));
     
     Promise.all([initialFetch, minDisplayTime]).then(([data]) => {
         portalData = data;
@@ -448,7 +456,7 @@ function runWelcomeOverlay() {
         setTimeout(() => { 
             sessionStorage.setItem('keptyWelcomeSeen', '1');
             window.location.href = `dashboard.html?id=${encodeURIComponent(userId)}`;
-        }, 600);
+        }, fadeDurationMs);
     });
 }
 
