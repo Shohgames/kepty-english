@@ -143,19 +143,64 @@ function getPortalData(userId) {
 
   // 2. Grammar
   const grammarSs = SpreadsheetApp.openById("1LEw95D2dEKOAwU2Rb516vq7uHSC97z6-DA3BH_3tDVs");
-  const grammarExamSheet = grammarSs.getSheetByName("exam") || grammarSs.getSheets()[0];
-  const grammarExplainSheet = grammarSs.getSheetByName("explain") || grammarSs.getSheetByName("explain");
+  const grammarSheets = grammarSs.getSheets();
+  const normSheetName = v => String(v || "").trim().toLowerCase();
+  const findGrammarSheet = (candidateNames) => {
+    for (let i = 0; i < candidateNames.length; i++) {
+      const exact = grammarSs.getSheetByName(candidateNames[i]);
+      if (exact) return exact;
+    }
+    const names = candidateNames.map(normSheetName);
+    for (let i = 0; i < grammarSheets.length; i++) {
+      if (names.indexOf(normSheetName(grammarSheets[i].getName())) !== -1) {
+        return grammarSheets[i];
+      }
+    }
+    return null;
+  };
+  const getSheetHeaders = (sheet) => {
+    if (!sheet || sheet.getLastRow() < 1 || sheet.getLastColumn() < 1) return [];
+    return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(normSheetName);
+  };
+  const looksLikeExamSheet = (sheet) => {
+    const h = getSheetHeaders(sheet);
+    return (h.indexOf("question") !== -1 && h.indexOf("answer") !== -1)
+      || (h.indexOf("answer") !== -1 && (h.indexOf("option2") !== -1 || h.indexOf("option3") !== -1));
+  };
+  const looksLikeExplainSheet = (sheet) => {
+    const h = getSheetHeaders(sheet);
+    const hasText = h.indexOf("explain") !== -1 || h.indexOf("explanation") !== -1 || h.indexOf("manual") !== -1 || h.indexOf("text") !== -1;
+    const hasKey = h.indexOf("category") !== -1 || h.indexOf("lesson") !== -1 || h.indexOf("key") !== -1;
+    return hasText && hasKey;
+  };
+
+  let grammarExamSheet = findGrammarSheet(["exam", "Exam", "grammar_exam"]);
+  let grammarExplainSheet = findGrammarSheet(["explain", "Explain", "manual", "manuals"]);
+
+  if (!grammarExamSheet) {
+    grammarExamSheet = grammarSheets.find(looksLikeExamSheet) || null;
+  }
+  if (!grammarExplainSheet) {
+    grammarExplainSheet = grammarSheets.find(sh => sh !== grammarExamSheet && looksLikeExplainSheet(sh)) || null;
+  }
+  if (!grammarExamSheet) {
+    grammarExamSheet = grammarSheets.find(sh => sh !== grammarExplainSheet) || grammarSheets[0] || null;
+  }
+  if (!grammarExplainSheet) {
+    grammarExplainSheet = grammarSheets.find(sh => sh !== grammarExamSheet) || null;
+  }
+
   let grammarData = [];
   if (grammarExamSheet) {
     const gRows = grammarExamSheet.getDataRange().getValues().slice(1);
     grammarData = gRows.map(row => ({
       category: String(row[0] || ""), question: String(row[1] || ""), answer: String(row[2] || ""),
       option2: String(row[3] || ""), option3: String(row[4] || ""), option4: String(row[5] || ""), explanation: String(row[6] || "")
-    })).filter(item => item.question !== "");
+    })).filter(item => item.question !== "" && item.answer !== "");
   }
   const manualDataMap = {};
   if (grammarExplainSheet) {
-    grammarExplainSheet.getDataRange().getValues().forEach(r => {
+    grammarExplainSheet.getDataRange().getValues().slice(1).forEach(r => {
       const k = String(r[0] || "").trim();
       if (k) {
         manualDataMap[k] = String(r[1] || "");
@@ -198,6 +243,8 @@ function getPortalData(userId) {
       const mat = String(row[0]||"").trim(), no = String(row[1]||"").trim();
       if (!mat || !no) return;
       const key = mat + "_" + no; 
+      const textCandidate = String(row[8] || "").trim();
+      const japaneseCandidate = String(row[9] || row[10] || "").trim();
       // Store direct audio link instead of just ID
       if (!grouped[key]) {
         const audioId = String(row[7]);
@@ -206,11 +253,13 @@ function getPortalData(userId) {
           lesson: mat,
           theme: no,
           audioUrl: audioUrl,
-          text: String(row[8] || ""),
-          japanese: String(row[9] || ""),
+          text: textCandidate,
+          japanese: japaneseCandidate,
           highlights: []
         };
       }
+      if (!grouped[key].text && textCandidate) grouped[key].text = textCandidate;
+      if (!grouped[key].japanese && japaneseCandidate) grouped[key].japanese = japaneseCandidate;
       if (row[2] && row[3]) grouped[key].highlights.push({ type: String(row[2]), target: String(row[3]), symbol: String(row[4]), katakana: String(row[5]), explanation: String(row[6]) });
     });
     shadowingData = Object.values(grouped);
@@ -220,28 +269,58 @@ function getPortalData(userId) {
   const phSs = SpreadsheetApp.openById("1lBdocIdicG7p3QGqVhwsxzwfpAwnWjtSsqm0t2VPwjY");
   const phSheet = phSs.getSheets()[0];
   let pronunciationData = [];
+  let pronunciationExplainIndex = { byCategory: {}, byPoint: {}, bySubcategory: {} };
   if (phSheet) {
     const pRows = phSheet.getDataRange().getValues().slice(1);
     pronunciationData = pRows.map(row => {
-      const videos = [row[6], row[7], row[8], row[9], row[10], row[11]].map(v => String(v||"").trim()).filter(v => v.includes('<iframe'));
+      // Current schema:
+      // A category, B subcategory, C point, D word, E symbol, F katakana, G translation, H-M videos, N explain
+      const videos = [row[7], row[8], row[9], row[10], row[11], row[12]]
+        .map(v => String(v || "").trim())
+        .filter(v => v.includes('<iframe'));
+
+      const explain = String(row[13] || "");
       return {
-        category: String(row[0]||""),
-        subcategory: String(row[1]||""),    // B
-        point: String(row[1]||""),
-        word: String(row[3]||""),           // D
-        symbol: String(row[4]||""),         // E
-        katakana: String(row[5]||""),       // F
-        translation: String(row[5]||""),
-        explain: String(row[13]||""),       // N
+        category: String(row[0] || ""),
+        subcategory: String(row[1] || ""),
+        point: String(row[2] || ""),
+        word: String(row[3] || ""),
+        symbol: String(row[4] || ""),
+        katakana: String(row[5] || ""),
+        translation: String(row[6] || ""),
+        explain: explain,
         videos: videos
       };
     }).filter(i => i.word.trim() !== "");
+
+    const norm = v => String(v || "").trim().toLowerCase();
+    // Build explain index from raw rows (not filtered pronunciationData),
+    // so explain rows without a word are still available to the frontend.
+    pRows.forEach(row => {
+      const explain = String(row[13] || row[14] || "").trim();
+      if (!explain) return;
+      const categoryKey = norm(row[0]);
+      const subcategoryKey = norm(row[1]);
+      const pointKey = norm(row[2]);
+
+      if (categoryKey && !pronunciationExplainIndex.byCategory[categoryKey]) {
+        pronunciationExplainIndex.byCategory[categoryKey] = explain;
+      }
+      if (categoryKey && pointKey) {
+        const k = `${categoryKey}::${pointKey}`;
+        if (!pronunciationExplainIndex.byPoint[k]) pronunciationExplainIndex.byPoint[k] = explain;
+      }
+      if (categoryKey && subcategoryKey) {
+        const k = `${categoryKey}::${subcategoryKey}`;
+        if (!pronunciationExplainIndex.bySubcategory[k]) pronunciationExplainIndex.bySubcategory[k] = explain;
+      }
+    });
   }
   let phManuals = {};
-  const phManualSheet = phSs.getSheetByName("Manuals");
-  if (phManualSheet) {
-    phManualSheet.getDataRange().getValues().forEach(r => { if (r[0]) phManuals[String(r[0]).toLowerCase().trim()] = r[1]; });
-  }
+  // const phManualSheet = phSs.getSheetByName("Manuals");
+  // if (phManualSheet) {
+  //   phManualSheet.getDataRange().getValues().forEach(r => { if (r[0]) phManuals[String(r[0]).toLowerCase().trim()] = r[1]; });
+  // }
 
   // 6. Speaking Form
   const spSs = SpreadsheetApp.openById("1ZXEfA--ghGMNUoPNU3pBpIgy-ySNp4O51x-lxK1kUIU");
@@ -285,10 +364,35 @@ function getPortalData(userId) {
 
   const dashboardTargets = getDashboardTargetConfig(ss, userId);
 
+  const pronunciationDebug = {
+    rowCount: pronunciationData.length,
+    explainNonEmptyCount: pronunciationData.filter(i => String(i.explain || "").trim()).length,
+    indexCounts: {
+      byCategory: Object.keys(pronunciationExplainIndex.byCategory || {}).length,
+      byPoint: Object.keys(pronunciationExplainIndex.byPoint || {}).length,
+      bySubcategory: Object.keys(pronunciationExplainIndex.bySubcategory || {}).length
+    },
+    sampleKeys: {
+      byCategory: Object.keys(pronunciationExplainIndex.byCategory || {}).slice(0, 5),
+      byPoint: Object.keys(pronunciationExplainIndex.byPoint || {}).slice(0, 5),
+      bySubcategory: Object.keys(pronunciationExplainIndex.bySubcategory || {}).slice(0, 5)
+    },
+    sampleExplainLengths: pronunciationData
+      .filter(i => String(i.explain || "").trim())
+      .slice(0, 5)
+      .map(i => ({
+        category: String(i.category || ""),
+        subcategory: String(i.subcategory || ""),
+        point: String(i.point || ""),
+        explainLength: String(i.explain || "").trim().length
+      }))
+  };
+
   return { 
     chunk: chunkData, grammar: grammarData, grammarManual: manualDataMap, 
     reading: readingData, shadowing: shadowingData, 
-    pronunciation: pronunciationData, pronunciationManual: phManuals,
+    pronunciation: pronunciationData, pronunciationManual: phManuals, pronunciationExplainIndex: pronunciationExplainIndex,
+    pronunciationDebug: pronunciationDebug,
     speaking: speakingData, vocabulary: vocabularyData, 
     topicTalk: topicTalkData,
     dashboardTargets: dashboardTargets,

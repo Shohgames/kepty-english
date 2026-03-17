@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -98,24 +98,24 @@
         }
     </style>
 <style>
-    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:66px;height:36px;background-color:#CE4A22;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 4px 12px rgba(206,74,34,.3);transition:transform .2s; }
+    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:50px;height:27px;background-color:#64748b;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.16);transition:transform .2s; }
     .menu-pill-trigger:active { transform:scale(.9); }
-    .pill-icon { width:28px;display:flex;flex-direction:column;gap:4px; }
-    .pill-line { display:flex;align-items:center;gap:3px;height:2.5px; }
-    .pill-line .line { height:2.5px;background:white;border-radius:10px;flex-grow:1; }
-    .pill-line .dot { width:3px;height:3px;background:white;border-radius:50%; }
-    .pill-line.top .line { width:18px; }
-    .pill-line.bot .line { width:18px;order:-1; }
+    .pill-icon { width:21px;display:flex;flex-direction:column;gap:3px; }
+    .pill-line { display:flex;align-items:center;gap:2px;height:2px; }
+    .pill-line .line { height:2px;background:white;border-radius:10px;flex-grow:1; }
+    .pill-line .dot { width:2px;height:2px;background:white;border-radius:50%; }
+    .pill-line.top .line { width:14px; }
+    .pill-line.bot .line { width:14px;order:-1; }
     .side-menu-item-link { display:flex;align-items:center;gap:14px;padding:12px;border-radius:18px;transition:.2s;text-decoration:none; }
     .side-menu-item-link:hover { background:#f8fafc; }
     .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#64748b; }
-    .side-menu-icon-box.active-bg { background:#CE4A22;color:white; }
+    .side-menu-icon-box.active-bg { background:#64748b;color:white; }
     #side-menu-content.open { right:0; }
 </style>
 </head>
 <div class="menu-pill-trigger" onclick="toggleSideMenu(true)"><div class="pill-icon"><div class="pill-line top"><span class="dot"></span><span class="line"></span></div><div class="pill-line mid"><span class="line"></span></div><div class="pill-line bot"><span class="line"></span><span class="dot"></span></div></div></div>
 <div id="side-menu-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[5000] hidden" onclick="toggleSideMenu(false)"></div>
-<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-[#CE4A22] pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span><span class="text-[9px] text-slate-400 font-bold uppercase">App Main</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dashboard / Logs</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span><span class="text-[9px] text-slate-400 font-bold uppercase">Strategy</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dressing Room</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Audio Admin</span></div></a></div></nav>
+<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-slate-500 pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span><span class="text-[9px] text-slate-400 font-bold uppercase">App Main</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dashboard / Logs</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span><span class="text-[9px] text-slate-400 font-bold uppercase">Strategy</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span><span class="text-[9px] text-slate-400 font-bold uppercase">Dressing Room</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span><span class="text-[9px] text-slate-400 font-bold uppercase">Audio Admin</span></div></a></div></nav>
 
     <div class="max-w-5xl mx-auto z-10 relative">
         
@@ -349,3 +349,5 @@ document.addEventListener('DOMContentLoaded',function(){lucide.createIcons();});
 </script>
 </body>
 </html>
+
+
