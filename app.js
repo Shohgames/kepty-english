@@ -25,6 +25,7 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+
 function getDashboardTargetConfig(ss, userId) {
   const candidateSheets = [
     "dashboard_targets",
@@ -272,26 +273,74 @@ function getPortalData(userId) {
   let pronunciationExplainIndex = { byCategory: {}, byPoint: {}, bySubcategory: {} };
   if (phSheet) {
     const pRows = phSheet.getDataRange().getValues().slice(1);
-    pronunciationData = pRows.map(row => {
+    pronunciationData = pRows.map((row, rowIdx) => {
       // Current schema:
       // A category, B subcategory, C point, D word, E symbol, F katakana, G translation, H-M videos, N explain
-      const videos = [row[7], row[8], row[9], row[10], row[11], row[12]]
+      const looksLikeWord = v => /[a-z]/i.test(String(v || "")) && !/[\u0250-\u02af]/.test(String(v || "")) && !/[\u02c8\u02cc/]/.test(String(v || ""));
+      const looksLikeIpa = v => /[\u0250-\u02af\u02c8\u02cc/]/.test(String(v || ""));
+      const looksLikePointLabel = v => /[「」]/.test(String(v || "")) || (/[ぁ-んァ-ヶ一-龯]/.test(String(v || "")) && !/[a-z]/i.test(String(v || "")));
+      const hasHiraganaOrKanji = v => /[ぁ-ゖ一-龯々〆ヵヶ]/.test(String(v || ""));
+      const isKatakanaOnly = v => /^[\s\u30A0-\u30FF\uFF66-\uFF9Fー・]+$/.test(String(v || "").trim()) && String(v || "").trim() !== "";
+
+      // Some rows are shifted one column to the right from D onward:
+      // D: point label, E: word, F: symbol, G: katakana, H: translation, I-N: videos, O: explain.
+      const isShifted =
+        (looksLikePointLabel(row[3]) && looksLikeWord(row[4]) && looksLikeIpa(row[5])) ||
+        (!looksLikeWord(row[3]) && looksLikeWord(row[4]) && looksLikeIpa(row[5]));
+      const wordIdx = isShifted ? 4 : 3;
+      const symbolIdx = isShifted ? 5 : 4;
+      const katakanaIdx = isShifted ? 6 : 5;
+      const translationIdx = isShifted ? 7 : 6;
+      const videoStartIdx = isShifted ? 8 : 7;
+      const explainIdx = isShifted ? 14 : 13;
+
+      const katakanaValue = String(row[katakanaIdx] || "").trim();
+      let translationValue = String(row[translationIdx] || "").trim();
+      const translationNextValue = String(row[translationIdx + 1] || "").trim();
+
+      // Recover translation when column alignment is off by one and G mirrors katakana.
+      if (
+        (!translationValue || translationValue === katakanaValue || isKatakanaOnly(translationValue)) &&
+        hasHiraganaOrKanji(translationNextValue)
+      ) {
+        translationValue = translationNextValue;
+      }
+
+      const videos = [
+        row[videoStartIdx],
+        row[videoStartIdx + 1],
+        row[videoStartIdx + 2],
+        row[videoStartIdx + 3],
+        row[videoStartIdx + 4],
+        row[videoStartIdx + 5]
+      ]
         .map(v => String(v || "").trim())
         .filter(v => v.includes('<iframe'));
 
-      const explain = String(row[13] || "");
+      const explain = String(row[explainIdx] || row[13] || row[14] || "");
       return {
         category: String(row[0] || ""),
         subcategory: String(row[1] || ""),
         point: String(row[2] || ""),
-        word: String(row[3] || ""),
-        symbol: String(row[4] || ""),
-        katakana: String(row[5] || ""),
-        translation: String(row[6] || ""),
+        word: String(row[wordIdx] || ""),
+        symbol: String(row[symbolIdx] || ""),
+        katakana: katakanaValue,
+        translation: translationValue,
         explain: explain,
-        videos: videos
+        videos: videos,
+        sourceRowIndex: rowIdx
       };
-    }).filter(i => i.word.trim() !== "");
+    }).filter(i => i.word.trim() !== "").map(i => ({
+      category: i.category,
+      subcategory: i.subcategory,
+      point: i.point,
+      word: i.word,
+      symbol: i.symbol,
+      katakana: i.katakana,
+      translation: i.translation,
+      explain: i.explain,
+      videos: i.videos
+    }));
 
     const norm = v => String(v || "").trim().toLowerCase();
     // Build explain index from raw rows (not filtered pronunciationData),

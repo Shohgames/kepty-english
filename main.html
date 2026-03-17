@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="study-tracker.js" defer></script>
+<script src="content/data/pronunciation-local-translation.js"></script>
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 <!-- Application Styles -->
@@ -230,24 +231,111 @@ function getActiveGrammarManual() {
         : {};
 }
 
+const DEFAULT_LOCAL_PRON_TRANSLATIONS = { byKey: {}, byWord: {} };
+let LOCAL_PRON_TRANSLATIONS = normalizeLocalPronTranslations(window.KEPTY_PRON_TRANSLATIONS || DEFAULT_LOCAL_PRON_TRANSLATIONS);
+
+function normalizePronWordKey(v) {
+    return normalizeTextKey(v).replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ');
+}
+
+function buildPronTranslationKey(category, subcategory, point, word) {
+    return `${normalizeTextKey(category)}::${normalizeTextKey(subcategory)}::${normalizeTextKey(point)}::${normalizeTextKey(word)}`;
+}
+
+function normalizeLocalPronTranslations(raw) {
+    const out = { byKey: {}, byWord: {} };
+    if (!raw || typeof raw !== 'object') return out;
+
+    Object.entries(raw.byKey || {}).forEach(([k, v]) => {
+        const key = String(k || '').trim();
+        const val = String(v || '').trim();
+        if (!key || !val) return;
+        out.byKey[key] = val;
+    });
+
+    Object.entries(raw.byWord || {}).forEach(([k, v]) => {
+        const key = normalizeTextKey(k);
+        const val = String(v || '').trim();
+        if (!key || !val) return;
+        out.byWord[key] = val;
+    });
+
+    return out;
+}
+
+async function loadLocalPronunciationTranslations() {
+    try {
+        if (window.KEPTY_PRON_TRANSLATIONS && typeof window.KEPTY_PRON_TRANSLATIONS === 'object') {
+            LOCAL_PRON_TRANSLATIONS = normalizeLocalPronTranslations(window.KEPTY_PRON_TRANSLATIONS);
+            console.info('[PronLocalTranslation] Loaded pronunciation-local-translation.js', {
+                byKeyCount: Object.keys(LOCAL_PRON_TRANSLATIONS.byKey || {}).length,
+                byWordCount: Object.keys(LOCAL_PRON_TRANSLATIONS.byWord || {}).length
+            });
+            return;
+        }
+
+        const res = await fetch('./content/data/pronunciation-local-translation.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        LOCAL_PRON_TRANSLATIONS = normalizeLocalPronTranslations(json);
+        console.info('[PronLocalTranslation] Loaded pronunciation-local-translation.json', {
+            byKeyCount: Object.keys(LOCAL_PRON_TRANSLATIONS.byKey || {}).length,
+            byWordCount: Object.keys(LOCAL_PRON_TRANSLATIONS.byWord || {}).length
+        });
+    } catch (err) {
+        LOCAL_PRON_TRANSLATIONS = { ...DEFAULT_LOCAL_PRON_TRANSLATIONS };
+        console.warn('[PronLocalTranslation] pronunciation-local-translation.json not loaded.', err);
+    }
+}
+
+const localPronTranslationsFetch = loadLocalPronunciationTranslations();
+
+function getLocalPronunciationTranslation(item) {
+    const key = buildPronTranslationKey(item?.category, item?.subcategory, item?.point, item?.word);
+    const fromKey = LOCAL_PRON_TRANSLATIONS.byKey?.[key] || '';
+    if (fromKey) return fromKey;
+    const wordKey = normalizeTextKey(item?.word);
+    const fromWord = LOCAL_PRON_TRANSLATIONS.byWord?.[wordKey] || '';
+    if (fromWord) return fromWord;
+
+    const looseWordKey = normalizePronWordKey(item?.word);
+    if (looseWordKey && looseWordKey !== wordKey) {
+        return LOCAL_PRON_TRANSLATIONS.byWord?.[looseWordKey] || '';
+    }
+    return '';
+}
+
 function getPronunciationCardFields(item) {
     let word = String(item?.word || '');
     let symbol = String(item?.symbol || '');
     let katakana = String(item?.katakana || '');
+    let translation = String(getLocalPronunciationTranslation(item) || '');
 
     // Some sheet layouts can arrive shifted by one column.
     // Auto-correct obvious cases so cards still show: word -> symbol -> katakana.
     const looksLikeWord = v => /[a-z]/i.test(v) && !/[\u0250-\u02af]/.test(v) && !/[\u02c8\u02cc\/]/.test(v);
     const looksLikeIpa = v => /[\u0250-\u02af\u02c8\u02cc\/]/.test(v);
     const looksLikePointLabel = v => /[「」]/.test(v) || (/[ぁ-んァ-ヶ一-龯]/.test(v) && !/[a-z]/i.test(v));
+    const looksLikeJapanese = v => /[ぁ-ゖァ-ヺ一-龯々〆ヵヶ]/.test(String(v || ''));
+    const hasHiraganaOrKanji = v => /[ぁ-ゖ一-龯々〆ヵヶ]/.test(String(v || ''));
 
     if (looksLikePointLabel(word) && looksLikeWord(symbol) && looksLikeIpa(katakana)) {
         word = symbol;
         symbol = katakana;
         katakana = String(item?.translation || '');
+        translation = String(getLocalPronunciationTranslation({
+            category: item?.category,
+            subcategory: item?.subcategory,
+            point: item?.point,
+            word: word
+        }) || getLocalPronunciationTranslation(item) || '');
     }
 
-    return { word, symbol, katakana };
+    // Only recover from katakana slot when it contains meaning text (hiragana/kanji),
+    // not when it is just katakana pronunciation.
+    // Endpoint translation is the only source for the card's last line.
+
+    return { word, symbol, katakana, translation };
 }
 
 const DEFAULT_LOCAL_PRONUNCIATION_EXPLAIN = { byCategory: {}, byThemeKey: {} };
@@ -490,8 +578,14 @@ function renderContent() {
         else { 
             area.innerHTML = `<div class="space-y-4">` + filtered.map((item, idx) => { 
                 const card = getPronunciationCardFields(item);
+                const localTranslation = getLocalPronunciationTranslation({
+                    category: item?.category,
+                    subcategory: item?.subcategory,
+                    point: item?.point,
+                    word: card.word
+                }) || card.translation || '';
                 const ttsWord = card.word.replace(/'/g, "\\'");
-                return `<div class="word-card p-5 pr-16 shadow-sm relative"><button onclick="playTTS('${ttsWord}')" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${ttsWord}')">${card.word}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed mb-1">${card.symbol}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed">${card.katakana}</div><div class="text-[10px] font-black text-kepty-orange text-left mt-2">${item.translation || ''}</div></div></div>`; 
+                return `<div class="word-card p-5 pr-16 shadow-sm relative"><button onclick="playTTS('${ttsWord}')" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${ttsWord}')">${card.word}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed mb-1">${card.symbol}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed">${card.katakana}</div><div class="text-[10px] font-black text-kepty-orange text-left mt-2">${localTranslation}</div></div></div>`; 
             }).join('') + `</div>`; 
         }
     } else if (currentModeIdx === 0) {
@@ -779,7 +873,7 @@ function runWelcomeOverlay() {
         overlay.style.display = 'none';
         const menuTrigger = document.querySelector('.menu-pill-trigger');
         if (menuTrigger) menuTrigger.classList.add('ready');
-        Promise.all([initialFetch, localExplainFetch, localGrammarFetch, localShadowingJapaneseFetch, localReadingModesFetch]).then(([data]) => {
+        Promise.all([initialFetch, localExplainFetch, localGrammarFetch, localShadowingJapaneseFetch, localReadingModesFetch, localPronTranslationsFetch]).then(([data]) => {
             portalData = data;
             switchApp('vocabulary');
             lucide.createIcons();
@@ -791,7 +885,7 @@ function runWelcomeOverlay() {
     // Keep total intro duration at 2 seconds including fade-out animation.
     const minDisplayTime = new Promise(resolve => setTimeout(resolve, Math.max(0, welcomeTotalMs - fadeDurationMs)));
     
-    Promise.all([initialFetch, localExplainFetch, localGrammarFetch, localShadowingJapaneseFetch, localReadingModesFetch, minDisplayTime]).then(([data]) => {
+    Promise.all([initialFetch, localExplainFetch, localGrammarFetch, localShadowingJapaneseFetch, localReadingModesFetch, localPronTranslationsFetch, minDisplayTime]).then(([data]) => {
         portalData = data;
         overlay.style.opacity = '0'; 
         setTimeout(() => { 
