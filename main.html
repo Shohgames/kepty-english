@@ -13,7 +13,7 @@
 <!-- Application Styles -->
 <link rel="stylesheet" href="index.css">
 <style>
-    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:50px;height:27px;background-color:#64748b;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 3px 10px rgba(15,23,42,.16);transition:transform .2s, opacity .2s;opacity:0;pointer-events:none; }
+    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:50px;height:27px;background-color:#CE4A22;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 3px 10px rgba(15,23,42,.16);transition:transform .2s, opacity .2s;opacity:0;pointer-events:none; }
     .menu-pill-trigger.ready { opacity:1; pointer-events:auto; }
     .menu-pill-trigger:active { transform:scale(.9); }
     .pill-icon { width:21px;display:flex;flex-direction:column;gap:3px; }
@@ -24,8 +24,8 @@
     .pill-line.bot .line { width:14px;order:-1; }
     .side-menu-item-link { display:flex;align-items:center;gap:14px;padding:12px;border-radius:18px;transition:.2s;text-decoration:none; }
     .side-menu-item-link:hover { background:#f8fafc; }
-    .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#64748b; }
-    .side-menu-icon-box.active-bg { background:#64748b;color:white; }
+    .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#FFEDE8;display:flex;align-items:center;justify-content:center;color:#CE4A22; }
+    .side-menu-icon-box.active-bg { background:#CE4A22;color:white; }
     #side-menu-content.open { right:0; }
     #main-content-area iframe { width: 100% !important; max-width: 100% !important; }
     #main-content-area .video-wrapper iframe { aspect-ratio: 16/9; }
@@ -34,7 +34,7 @@
 <body class="bg-slate-50 text-slate-900 pb-24 text-center">
 <div class="menu-pill-trigger" onclick="toggleSideMenu(true)"><div class="pill-icon"><div class="pill-line top"><span class="dot"></span><span class="line"></span></div><div class="pill-line mid"><span class="line"></span></div><div class="pill-line bot"><span class="line"></span><span class="dot"></span></div></div></div>
 <div id="side-menu-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[5000] hidden" onclick="toggleSideMenu(false)"></div>
-<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-slate-500 pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span></div></a></div></nav>
+<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-slate-500 pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span></div></a></div></nav>
 <div id="welcome-overlay"><div id="welcome-message">Kepty English</div></div>
 <div class="p-4 max-w-5xl mx-auto">
     <header class="py-6 px-2">
@@ -148,7 +148,7 @@ function renderThemes() {
     const data = currentApp === 'grammar' ? getActiveGrammarData() : portalData[currentApp];
     if (!data || data.length === 0) { themeMenu.classList.add('hidden'); renderContent(); return; }
     const filteredBySub = data.filter(d => (d.lesson || d.category) === currentSubKey);
-    const themes = [...new Set(filteredBySub.map(d => d.theme || d.point))].filter(Boolean);
+    const themes = [...new Set(filteredBySub.map(d => d.theme || d.point || d.subcategory))].filter(Boolean);
     if (themes.length === 0) { themeMenu.classList.add('hidden'); renderContent(); return; }
     if (!currentTheme || !themes.includes(currentTheme)) currentTheme = themes[0];
     themeMenu.classList.remove('hidden'); themeList.innerHTML = themes.map(t => `<div onclick="selectTheme('${t}')" class="theme-item ${currentTheme === t ? 'active' : ''}">${currentApp==='shadowing'?'#'+t:t}</div>`).join('');
@@ -419,7 +419,7 @@ function renderContent() {
     const filtered = data.filter(d => {
         if ((d.lesson || d.category) !== currentSubKey) return false;
         if (!shouldFilterTheme) return true;
-        return (!currentTheme || d.theme === currentTheme || d.point === currentTheme || currentApp === 'vocabulary');
+        return (!currentTheme || d.theme === currentTheme || d.point === currentTheme || d.subcategory === currentTheme || currentApp === 'vocabulary');
     });
     
     if (currentApp === 'pronunciation') {
@@ -482,7 +482,7 @@ function renderContent() {
         }
         else if (currentModeIdx === 1) {
             const vids = [];
-            data.filter(i => i.category === currentSubKey).forEach(item => { if (item.videos) item.videos.forEach(v => { if (!vids.includes(v)) vids.push(v); }); });
+            filtered.forEach(item => { if (item.videos) item.videos.forEach(v => { if (!vids.includes(v)) vids.push(v); }); });
             area.innerHTML = vids.length > 0
                 ? `<div class="flex flex-col gap-4">${vids.map(v => `<div class="bg-white border border-slate-100 rounded-2xl p-3 overflow-hidden shadow-sm"><div class="w-full overflow-hidden">${v}</div></div>`).join('')}</div>`
                 : `<p class="py-10 font-bold">No videos available.</p>`;
@@ -491,7 +491,7 @@ function renderContent() {
             area.innerHTML = `<div class="space-y-4">` + filtered.map((item, idx) => { 
                 const card = getPronunciationCardFields(item);
                 const ttsWord = card.word.replace(/'/g, "\\'");
-                return `<div class="word-card p-5 pr-16 shadow-sm relative"><button onclick="playTTS('${ttsWord}')" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${ttsWord}')">${card.word}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed mb-1">${card.symbol}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed">${card.katakana}</div><div class="text-[10px] font-black text-kepty-orange uppercase text-left mt-2">${item.subcategory || item.point || ''}</div></div></div>`; 
+                return `<div class="word-card p-5 pr-16 shadow-sm relative"><button onclick="playTTS('${ttsWord}')" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="volume-2" class="w-5 h-5"></i></button><div class="ph-card-content flex-1 min-w-0"><div class="text-2xl font-black text-slate-900 tracking-tight mb-1" onclick="playTTS('${ttsWord}')">${card.word}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed mb-1">${card.symbol}</div><div class="text-[12px] text-slate-500 font-semibold leading-relaxed">${card.katakana}</div><div class="text-[10px] font-black text-kepty-orange text-left mt-2">${item.translation || ''}</div></div></div>`; 
             }).join('') + `</div>`; 
         }
     } else if (currentModeIdx === 0) {
@@ -528,10 +528,10 @@ function renderContent() {
         }
         else if (currentApp === 'speaking') { 
             const item = filtered[0]; if (!item) return; 
-            area.innerHTML = `<div class="word-card p-5 shadow-sm text-left border border-slate-100 flex flex-col gap-4">
+            area.innerHTML = `<div class="word-card p-5 shadow-sm text-left border border-slate-100 flex flex-col gap-2">
                     <h4 class="text-lg font-bold text-slate-800 mb-0 tracking-tight">${item.point}</h4>
                     <section class="bg-slate-100 px-4 py-3 rounded-[24px] border border-slate-200 text-sm font-medium text-slate-700 leading-normal text-left whitespace-pre-line flex flex-col items-start justify-center">
-                        <div class="flex items-center justify-start gap-2 mb-2 w-full">
+                        <div class="flex items-center justify-start w-full">
                             <span class="text-[10px] font-black bg-slate-700 text-white px-2 py-0.5 rounded tracking-widest uppercase">Point</span>
                         </div>
                         ${item.background.trim()}
@@ -777,6 +777,8 @@ function runWelcomeOverlay() {
     const textRevealDelayMs = 0;
     if (hasSeenWelcome) {
         overlay.style.display = 'none';
+        const menuTrigger = document.querySelector('.menu-pill-trigger');
+        if (menuTrigger) menuTrigger.classList.add('ready');
         Promise.all([initialFetch, localExplainFetch, localGrammarFetch, localShadowingJapaneseFetch, localReadingModesFetch]).then(([data]) => {
             portalData = data;
             switchApp('vocabulary');
@@ -793,6 +795,8 @@ function runWelcomeOverlay() {
         portalData = data;
         overlay.style.opacity = '0'; 
         setTimeout(() => { 
+            const menuTrigger = document.querySelector('.menu-pill-trigger');
+            if (menuTrigger) menuTrigger.classList.add('ready');
             sessionStorage.setItem('keptyWelcomeSeen', '1');
             window.location.href = `dashboard.html?id=${encodeURIComponent(userId)}`;
         }, fadeDurationMs);
@@ -819,8 +823,6 @@ window.onload = () => {
     runWelcomeOverlay(); 
     requestWakeLock();
     lucide.createIcons();
-    const menuTrigger = document.querySelector('.menu-pill-trigger');
-    if (menuTrigger) menuTrigger.classList.add('ready');
     const f = document.getElementById('main-footer'); 
     f.addEventListener('scroll', () => { document.getElementById('footer-arrow').style.display = (f.scrollLeft + f.clientWidth >= f.scrollWidth - 10) ? 'none' : 'flex'; });
     const gp = document.getElementById('global-player');
@@ -833,6 +835,8 @@ function toggleSideMenu(isOpen){var m=document.getElementById('side-menu-content
 </script>
 </body>
 </html>
+
+
 
 
 

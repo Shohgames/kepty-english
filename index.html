@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="study-tracker.js" defer></script>
     <style>
-            :root { --kepty-premium-orange: #64748b; }
+            :root { --kepty-premium-orange: #CE4A22; }
 
             .menu-pill-trigger {
                 position: fixed;
@@ -47,9 +47,9 @@
             .menu-item-link:hover { background: #f8fafc; }
             .menu-icon-box {
                 width: 40px; height: 40px; border-radius: 12px;
-                background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #64748b;
+                background: #FFEDE8; display: flex; align-items: center; justify-content: center; color: #CE4A22;
             }
-            .menu-icon-box.active-bg { background:#64748b; color: white; }
+            .menu-icon-box.active-bg { background:#CE4A22; color: white; }
             #side-menu-content.open { right: 0; }
 
     </style>
@@ -77,7 +77,7 @@
             
             <div class="space-y-3">
                 <a href="main.html" class="menu-item-link">
-                    <div class="menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div>
+                    <div class="menu-icon-box"><i data-lucide="graduation-cap"></i></div>
                     <div class="flex flex-col">
                         <span class="text-sm font-black text-slate-800">各種トレーニング</span>
                     </div>
@@ -133,6 +133,7 @@
 document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
 </script>
 </html>
+
 
 
 

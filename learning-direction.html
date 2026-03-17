@@ -20,7 +20,7 @@
         /* タイトル：オレンジのプレミアムアンダーライン */
         .app-title-container { display: inline-block; position: relative; margin-bottom: 2rem; }
         .app-title { font-size: 1.65rem; font-weight: 900; letter-spacing: -0.05em; white-space: nowrap; }
-        .app-title-underline { position: absolute; bottom: -8px; left: 0; width: 100%; height: 4px; background-color:#64748b; border-radius: 2px; }
+        .app-title-underline { position: absolute; bottom: -8px; left: 0; width: 100%; height: 4px; background-color:#CE4A22; border-radius: 2px; }
         @media (min-width: 768px) { .app-title { font-size: 2.5rem; } }
 
         .section-no { font-size: 0.75rem; font-weight: 900; color: #CE4A22; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem; }
@@ -73,13 +73,32 @@
 
         /* Section 4 */
         .intensity-bar { height: 34px; border-radius: 10px; display: flex; align-items: center; padding: 0 14px; font-size: 11px; font-weight: 800; margin-bottom: 6px; }
-        .intensity-high { background-color:#64748b; color: white; width: 100%; }
+        .intensity-high { background-color:#CE4A22; color: white; width: 100%; }
         .intensity-mid { background-color: #FAC3B1; color: #CE4A22; width: 85%; }
         .intensity-low { background-color: #FFEDE8; color: #94a3b8; width: 65%; }
         .big-arrow { color: #e2e8f0; }
+
+        .intensity-legend { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+        .legend-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #64748b;
+        }
+        .legend-dot { width: 8px; height: 8px; border-radius: 999px; }
+        .legend-dot.high { background: #CE4A22; }
+        .legend-dot.mid { background: #FAC3B1; }
+        .legend-dot.low { background: #FFEDE8; border: 1px solid #e2e8f0; }
     </style>
 <style>
-    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:50px;height:27px;background-color:#64748b;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.16);transition:transform .2s; }
+    .menu-pill-trigger { position:fixed;top:20px;right:20px;width:50px;height:27px;background-color:#CE4A22;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:5500;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.16);transition:transform .2s; }
     .menu-pill-trigger:active { transform:scale(.9); }
     .pill-icon { width:21px;display:flex;flex-direction:column;gap:3px; }
     .pill-line { display:flex;align-items:center;gap:2px;height:2px; }
@@ -89,15 +108,15 @@
     .pill-line.bot .line { width:14px;order:-1; }
     .side-menu-item-link { display:flex;align-items:center;gap:14px;padding:12px;border-radius:18px;transition:.2s;text-decoration:none; }
     .side-menu-item-link:hover { background:#f8fafc; }
-    .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#64748b; }
-    .side-menu-icon-box.active-bg { background:#64748b;color:white; }
+    .side-menu-icon-box { width:40px;height:40px;border-radius:12px;background:#FFEDE8;display:flex;align-items:center;justify-content:center;color:#CE4A22; }
+    .side-menu-icon-box.active-bg { background:#CE4A22;color:white; }
     #side-menu-content.open { right:0; }
 </style>
 </head>
 <body class="pb-20">
 <div class="menu-pill-trigger" onclick="toggleSideMenu(true)"><div class="pill-icon"><div class="pill-line top"><span class="dot"></span><span class="line"></span></div><div class="pill-line mid"><span class="line"></span></div><div class="pill-line bot"><span class="line"></span><span class="dot"></span></div></div></div>
 <div id="side-menu-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[5000] hidden" onclick="toggleSideMenu(false)"></div>
-<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-slate-500 pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box active-bg"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span></div></a></div></nav>
+<nav id="side-menu-content" class="fixed top-0 right-[-280px] w-[280px] h-full bg-white z-[5001] transition-all duration-300 shadow-2xl p-6 flex flex-col"><div class="flex justify-between items-center mb-10"><div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-l-2 border-slate-500 pl-3">Menu</div><button onclick="toggleSideMenu(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="space-y-3"><a href="main.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="graduation-cap"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">各種トレーニング</span></div></a><a href="dashboard.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="bar-chart-3"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習管理</span></div></a><a href="learning-direction.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="compass"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">学習方針</span></div></a><a href="dressing-room.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="shirt"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">ドレッシングルーム</span></div></a><a href="admin-audio.html" class="side-menu-item-link"><div class="side-menu-icon-box"><i data-lucide="settings"></i></div><div class="flex flex-col"><span class="text-sm font-black text-slate-800">音声管理</span></div></a></div></nav>
 
     <div class="max-w-4xl mx-auto px-4 pt-12">
         <header class="text-center mb-16">
@@ -312,6 +331,12 @@
                 <h2 class="text-2xl font-black mb-10 text-center">スキル積み上げのロードマップ</h2>
                 <p class="text-xs text-slate-400 font-bold leading-relaxed mb-8">aaa<br>aaa</p>
             </div>
+
+            <div class="intensity-legend" aria-label="色の凡例">
+                <div class="legend-pill"><span class="legend-dot high"></span><span>高強度</span></div>
+                <div class="legend-pill"><span class="legend-dot mid"></span><span>中強度</span></div>
+                <div class="legend-pill"><span class="legend-dot low"></span><span>低強度</span></div>
+            </div>
             
             <div class="max-w-md mx-auto space-y-4">
                 <div class="flex flex-col items-center gap-2 mb-2">
@@ -377,6 +402,8 @@ function toggleSideMenu(isOpen){var m=document.getElementById('side-menu-content
 </script>
 </body>
 </html>
+
+
 
 
 
